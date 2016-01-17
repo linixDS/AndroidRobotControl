@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="linix.example.com.robotcontrol.MainActivity"
+    android:background="@drawable/robot_image"
+    android:paddingLeft="10dp"
+    android:paddingBottom="10dp"
+    android:paddingRight="10dp"
+    android:paddingTop="10dp">
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/imageLeft"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:src="@drawable/button_left" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/imageBack"
+        android:layout_alignTop="@+id/imageLeft"
+        android:layout_toRightOf="@+id/imageLeft"
+        android:layout_toEndOf="@+id/imageLeft"
+        android:src="@drawable/button_down"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/imageRight"
+        android:layout_alignTop="@+id/imageBack"
+        android:layout_toRightOf="@+id/imageBack"
+        android:layout_toEndOf="@+id/imageBack"
+        android:src="@drawable/button_right" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/imageForward"
+        android:src="@drawable/button_up"
+        android:layout_above="@+id/imageLeft"
+        android:layout_toRightOf="@+id/imageLeft"
+        android:layout_toEndOf="@+id/imageLeft"
+        android:paddingLeft="10dp"
+        android:paddingBottom="10dp" />
+
+    <ViewAnimator
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/viewAnimator"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="86dp"
+        android:animateFirstView="false" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/imageCamera"
+        android:layout_above="@+id/imageForward"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/nocapture"
+        android:longClickable="true" />
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Włącznik kamery"
+        android:id="@+id/switchCamera"
+        android:checked="false"
+        android:clickable="false"
+        android:textSize="28dp"
+        android:textStyle="bold"
+        android:layout_below="@+id/imageCamera"
+        android:layout_alignLeft="@+id/imageCamera"
+        android:layout_alignStart="@+id/imageCamera"
+        android:layout_alignRight="@+id/imageCamera"
+        android:layout_alignEnd="@+id/imageCamera"
+        android:textOn="Włącz kamerę"
+        android:textOff="Wyłącz kamerę"
+        android:enabled="false"
+        android:paddingLeft="15dp"
+        android:paddingTop="10dp" />
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tryb AUTO"
+        android:id="@+id/switchAutoRobot"
+        android:layout_below="@+id/switchCamera"
+        android:layout_alignLeft="@+id/switchCamera"
+        android:layout_alignStart="@+id/switchCamera"
+        android:textStyle="bold"
+        android:textSize="28dp"
+        android:layout_alignRight="@+id/switchCamera"
+        android:layout_alignEnd="@+id/switchCamera"
+        android:paddingLeft="15dp"
+        android:paddingTop="5dp"
+        android:enabled="false" />
+
+    <RadioGroup
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignRight="@+id/switchAutoRobot"
+        android:layout_alignEnd="@+id/switchAutoRobot"
+        android:id="@+id/radioGroup">
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BIEG 5"
+            android:id="@+id/speed5"
+            android:textSize="22dp"
+            android:layout_alignTop="@+id/imageRight"
+            android:layout_centerHorizontal="true"
+            android:checked="true" />
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BIEG 4"
+            android:id="@+id/speed4"
+            android:textSize="22dp" />
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BIEB 3"
+            android:id="@+id/speed3"
+            android:textSize="22dp" />
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BIEG 2"
+            android:id="@+id/speed2"
+            android:textSize="22dp" />
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BIEG 1"
+            android:id="@+id/speed1"
+            android:textSize="22dp" />
+
+    </RadioGroup>
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/imageSpeed"
+        android:layout_alignParentTop="true"
+        android:layout_alignRight="@+id/imageRight"
+        android:layout_alignEnd="@+id/imageRight"
+        android:src="@drawable/speed0"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/imageConnect"
+        android:src="@drawable/start"
+        android:layout_alignTop="@+id/radioGroup"
+        android:layout_centerHorizontal="true" />
+
+</RelativeLayout>

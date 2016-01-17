@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference android:title="Nazwa urządzenia Bluetooth"
+        android:key="deviceName"
+        android:summary="Podaj nazwę urządzenia"></EditTextPreference>
+    <EditTextPreference android:title="Adres kamery IP"
+        android:key="addressCameraIP"
+        android:summary="Podaj adres kamery IP"></EditTextPreference>
+</PreferenceScreen>
