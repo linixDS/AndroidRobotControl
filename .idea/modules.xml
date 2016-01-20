@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/RobotControl.iml" filepath="$PROJECT_DIR$/RobotControl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/AndroidRobotControl.iml" filepath="$PROJECT_DIR$/AndroidRobotControl.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

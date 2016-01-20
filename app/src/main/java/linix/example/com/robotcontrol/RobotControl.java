@@ -1,35 +1,39 @@
 package linix.example.com.robotcontrol;
 
+interface RobotProtocolConsts{
+    public static final byte CMD_RESPONDE = 100;
+    public  static final byte CMD_INIT   =   10;
+
+    public byte CMD_SET_MOTOR=   20;
+    public byte CMD_SET_LIGHT=   21;
+    public byte CMD_SET_AUTO =   22;
+    public byte CMD_SET_EYES =   23;
+    public byte CMD_GET_EYES =   24;
+    public byte CMD_SET_SPEED=   25;
+
+    public byte PARAM_CODE    = 101;
+    public byte PARAM_ON      = 1;
+    public byte PARAM_OFF     = 0;
+
+    public byte PARAM_FORWARD = 1;
+    public byte PARAM_STOP    = 2;
+    public byte PARAM_BACK    = 3;
+    public byte PARAM_LEFT    = 4;
+    public byte PARAM_RIGHT   = 5;
+
+    public byte PARAM_SPEED1  = 1;
+    public byte PARAM_SPEED2  = 2;
+    public byte PARAM_SPEED3  = 3;
+    public byte PARAM_SPEED4  = 4;
+    public byte PARAM_SPEED5  = 5;
+}
+
 
 public class RobotControl {
 
-    protected byte CMD_RESPONDE = 100;
-    protected byte CMD_INIT     =   10;
-    protected byte CMD_SET_MOTOR=   20;
-    protected byte CMD_SET_LIGHT=   21;
-    protected byte CMD_SET_AUTO =   22;
-    protected byte CMD_SET_EYES =   23;
-    protected byte CMD_GET_EYES =   24;
-    protected byte CMD_SET_SPEED=   25;
-
-    protected byte PARAM_CODE    = 101;
-    protected byte PARAM_ON      = 1;
-    protected byte PARAM_OFF     = 0;
-
-    protected byte PARAM_FORWARD = 1;
-    protected byte PARAM_STOP    = 2;
-    protected byte PARAM_BACK    = 3;
-    protected byte PARAM_LEFT    = 4;
-    protected byte PARAM_RIGHT   = 5;
-
-    protected byte PARAM_SPEED1  = 1;
-    protected byte PARAM_SPEED2  = 2;
-    protected byte PARAM_SPEED3  = 3;
-    protected byte PARAM_SPEED4  = 4;
-    protected byte PARAM_SPEED5  = 5;
-
     private BluetoothClient BTClient;
-    private int speed = 5;
+    public int speed = 5;
+    public boolean pilot = false;
 
     public RobotControl(BluetoothClient client)
     {
@@ -44,11 +48,11 @@ public class RobotControl {
             return;
 
         TX = new byte[2];
-        TX[0] = CMD_SET_AUTO;
+        TX[0] = RobotProtocolConsts.CMD_SET_AUTO;
         if (value)
-            TX[1] = PARAM_ON;
+            TX[1] = RobotProtocolConsts.PARAM_ON;
         else
-            TX[1] = PARAM_OFF;
+            TX[1] = RobotProtocolConsts.PARAM_OFF;
 
         this.BTClient.write(TX);
     }
@@ -61,10 +65,8 @@ public class RobotControl {
             return;
         if ((number > 0) && (number < 6))
         {
-            this.speed = (byte)number;
-
             TX = new byte[2];
-            TX[0] = CMD_SET_SPEED;
+            TX[0] = RobotProtocolConsts.CMD_SET_SPEED;
             TX[1] = (byte) number;
             this.BTClient.write(TX);
         }
@@ -83,8 +85,8 @@ public class RobotControl {
             return;
 
         TX = new byte[2];
-        TX[0] = CMD_INIT;
-        TX[1] = PARAM_CODE;
+        TX[0] = RobotProtocolConsts.CMD_INIT;
+        TX[1] = RobotProtocolConsts.PARAM_CODE;
         this.BTClient.write(TX);
     }
 
@@ -96,8 +98,8 @@ public class RobotControl {
             return;
 
         TX = new byte[2];
-        TX[0] = CMD_SET_MOTOR;
-        TX[1] = PARAM_FORWARD;
+        TX[0] = RobotProtocolConsts.CMD_SET_MOTOR;
+        TX[1] = RobotProtocolConsts.PARAM_FORWARD;
         this.BTClient.write(TX);
     }
 
@@ -109,8 +111,8 @@ public class RobotControl {
             return;
 
         TX = new byte[2];
-        TX[0] = CMD_SET_MOTOR;
-        TX[1] = PARAM_BACK;
+        TX[0] = RobotProtocolConsts.CMD_SET_MOTOR;
+        TX[1] = RobotProtocolConsts.PARAM_BACK;
         this.BTClient.write(TX);
     }
 
@@ -122,8 +124,8 @@ public class RobotControl {
             return;
 
         TX = new byte[2];
-        TX[0] = CMD_SET_MOTOR;
-        TX[1] = PARAM_STOP;
+        TX[0] = RobotProtocolConsts.CMD_SET_MOTOR;
+        TX[1] = RobotProtocolConsts.PARAM_STOP;
         this.BTClient.write(TX);
     }
 
@@ -135,8 +137,8 @@ public class RobotControl {
             return;
 
         TX = new byte[2];
-        TX[0] = CMD_SET_MOTOR;
-        TX[1] = PARAM_LEFT;
+        TX[0] = RobotProtocolConsts.CMD_SET_MOTOR;
+        TX[1] = RobotProtocolConsts.PARAM_LEFT;
         this.BTClient.write(TX);
     }
 
@@ -148,8 +150,8 @@ public class RobotControl {
             return;
 
         TX = new byte[2];
-        TX[0] = CMD_SET_MOTOR;
-        TX[1] = PARAM_RIGHT;
+        TX[0] = RobotProtocolConsts.CMD_SET_MOTOR;
+        TX[1] = RobotProtocolConsts.PARAM_RIGHT;
         this.BTClient.write(TX);
     }
 

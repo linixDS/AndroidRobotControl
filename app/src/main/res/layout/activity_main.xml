@@ -50,68 +50,22 @@
         android:paddingLeft="10dp"
         android:paddingBottom="10dp" />
 
-    <ViewAnimator
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/viewAnimator"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="86dp"
-        android:animateFirstView="false" />
-
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/imageCamera"
-        android:layout_above="@+id/imageForward"
-        android:layout_centerHorizontal="true"
         android:src="@drawable/nocapture"
-        android:longClickable="true" />
-
-    <Switch
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Włącznik kamery"
-        android:id="@+id/switchCamera"
-        android:checked="false"
-        android:clickable="false"
-        android:textSize="28dp"
-        android:textStyle="bold"
-        android:layout_below="@+id/imageCamera"
-        android:layout_alignLeft="@+id/imageCamera"
-        android:layout_alignStart="@+id/imageCamera"
-        android:layout_alignRight="@+id/imageCamera"
-        android:layout_alignEnd="@+id/imageCamera"
-        android:textOn="Włącz kamerę"
-        android:textOff="Wyłącz kamerę"
-        android:enabled="false"
-        android:paddingLeft="15dp"
-        android:paddingTop="10dp" />
-
-    <Switch
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Tryb AUTO"
-        android:id="@+id/switchAutoRobot"
-        android:layout_below="@+id/switchCamera"
-        android:layout_alignLeft="@+id/switchCamera"
-        android:layout_alignStart="@+id/switchCamera"
-        android:textStyle="bold"
-        android:textSize="28dp"
-        android:layout_alignRight="@+id/switchCamera"
-        android:layout_alignEnd="@+id/switchCamera"
-        android:paddingLeft="15dp"
-        android:paddingTop="5dp"
-        android:enabled="false" />
+        android:longClickable="true"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
 
     <RadioGroup
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_alignRight="@+id/switchAutoRobot"
-        android:layout_alignEnd="@+id/switchAutoRobot"
-        android:id="@+id/radioGroup">
+        android:id="@+id/radioGroup"
+        android:layout_alignRight="@+id/imageCamera"
+        android:layout_alignEnd="@+id/imageCamera">
 
         <RadioButton
             android:layout_width="wrap_content"
@@ -158,11 +112,12 @@
         android:layout_height="wrap_content"
         android:id="@+id/imageSpeed"
         android:layout_alignParentTop="true"
-        android:layout_alignRight="@+id/imageRight"
-        android:layout_alignEnd="@+id/imageRight"
         android:src="@drawable/speed0"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:layout_above="@+id/switchCamera"
+        android:layout_toLeftOf="@+id/imageCamera"
+        android:layout_toStartOf="@+id/imageCamera" />
 
     <ImageView
         android:layout_width="wrap_content"
@@ -171,5 +126,41 @@
         android:src="@drawable/start"
         android:layout_alignTop="@+id/radioGroup"
         android:layout_centerHorizontal="true" />
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Kamera IP"
+        android:id="@+id/switchCamera"
+        android:layout_below="@+id/imageCamera"
+        android:layout_alignLeft="@+id/imageCamera"
+        android:layout_alignStart="@+id/imageCamera"
+        android:textStyle="bold"
+        android:textSize="22dp"
+        android:layout_alignRight="@+id/imageCamera"
+        android:layout_alignEnd="@+id/imageCamera"
+        android:maxHeight="28dp" />
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tryb AUTO"
+        android:id="@+id/switchAutoRobot"
+        android:layout_below="@+id/switchCamera"
+        android:layout_alignLeft="@+id/switchCamera"
+        android:layout_alignStart="@+id/switchCamera"
+        android:textStyle="bold"
+        android:textSize="22dp"
+        android:layout_alignRight="@+id/radioGroup"
+        android:layout_alignEnd="@+id/radioGroup" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/animView"
+        android:layout_centerInParent="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignWithParentIfMissing="false"
+        android:layout_marginRight="170dp" />
 
 </RelativeLayout>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:title="Konfiguracja">
+
+    <PreferenceCategory
+        android:title="Połączenie sterujące robotem Bluetooth">
+
+        <EditTextPreference
+            android:key="deviceName"
+            android:title="Nazwa urządzenia"
+            android:summary=""
+            android:dialogTitle="Wprowadź nazwę urządzenia Bluetooth"
+            />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Ustawienia odbioru kamery IP">
+
+        <EditTextPreference
+            android:key="addressCamera"
+            android:title="Adres kamery"
+            android:summary=""
+            android:dialogTitle="Wprowadź adres"
+            />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

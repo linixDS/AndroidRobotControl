@@ -3,13 +3,19 @@ package linix.example.com.robotcontrol;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.graphics.drawable.AnimationDrawable;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
@@ -18,6 +24,7 @@ import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
@@ -29,6 +36,9 @@ public class MainActivity extends AppCompatActivity {
     ImageView cameraImg;
     ImageView speedImg;
     ImageView connectImg;
+    ImageView animImg;
+    AnimationDrawable animation;
+    boolean connected = false;
 
     RadioGroup biegi;
     RadioButton speed1, speed2, speed3, speed4, speed5;
@@ -39,6 +49,10 @@ public class MainActivity extends AppCompatActivity {
     BluetoothClient BTClient;
     RobotControl    robot;
     ProgressDialog connectionDialog;
+    WifiManager wm;
+
+    String deviceName;
+    String addressIP;
 
     private final Handler handler = new Handler(){
 
@@ -54,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
                                 connectionDialog.dismiss();
                             connectionDialog = null;
 
-                            setConnectedComponent();
+                            robot.Init();
                             break;
                         case BluetoothClient.STATE_NONE:
                             if (connectionDialog != null)
@@ -67,7 +81,12 @@ public class MainActivity extends AppCompatActivity {
 
                 case Constants.MESSAGE_READ:
                     byte[] readBuf = (byte[]) msg.obj;
-                    //readData(readBuf);
+                    if (readBuf.length == 2){
+                        byte cmd    = readBuf[0];
+                        byte param  = readBuf[1];
+                        onReceiveData(cmd, param);
+                    }
+
                     break;
 
                 case Constants.MESSAGE_WRITE:
@@ -80,18 +99,19 @@ public class MainActivity extends AppCompatActivity {
             }
 
         }
+
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(R.layout.activity_main);
 
-        //Aktywacja WIFI
-        WifiManager wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+
+        wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         wm.setWifiEnabled (true);
+
 
         biegi     = (RadioGroup) findViewById(R.id.radioGroup);
         biegi.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
@@ -126,7 +146,18 @@ public class MainActivity extends AppCompatActivity {
 
         cameraImg = (ImageView) findViewById(R.id.imageCamera);
         speedImg  = (ImageView) findViewById(R.id.imageSpeed);
+        animImg   = (ImageView) findViewById(R.id.animView);
         connectImg= (ImageView) findViewById(R.id.imageConnect);
+
+        connectImg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (connected)
+                    stopRobot();
+                else
+                    startRobot();
+            }
+        });
 
         autoSwitch = (Switch) findViewById(R.id.switchAutoRobot);
         autoSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -134,13 +165,11 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked){
                     robot.autoPilot(true);
-                    setDisconnectComponent();
-                    cameraSwitch.setEnabled(true);
-                    autoSwitch.setEnabled(true);
                 }
                 else
                 {
-                    robot.autoPilot(false);
+                    if (robot.pilot == true)
+                        robot.autoPilot(false);
                 }
 
             }
@@ -151,11 +180,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked){
-                    //ON
+                    if (wm.isWifiEnabled()){
+
+                    }
+                        else
+                        cameraSwitch.setChecked(false);
                 }
                     else
                 {
-                    //OFF
+                    cameraImg.setImageResource(R.drawable.nocapture);
                 }
 
             }
@@ -167,15 +200,18 @@ public class MainActivity extends AppCompatActivity {
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        leftImg.setImageResource(R.drawable.button_left_select);
+
                         blockDirectionButtons(false, leftImg);
                         robot.goLeft();
                         break;
                     case MotionEvent.ACTION_UP:
+                        leftImg.setImageResource(R.drawable.button_left);
                         blockDirectionButtons(true, leftImg);
                         robot.goStop();
                         break;
                 }
-                return false;
+                return true;
             }
         });
 
@@ -185,15 +221,17 @@ public class MainActivity extends AppCompatActivity {
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        rightImg.setImageResource(R.drawable.button_right_select);
                         blockDirectionButtons(false, rightImg);
                         robot.goRight();
                         break;
                     case MotionEvent.ACTION_UP:
+                        rightImg.setImageResource(R.drawable.button_right);
                         blockDirectionButtons(true, rightImg);
                         robot.goStop();
                         break;
                 }
-                return false;
+                return true;
             }
         });
 
@@ -203,15 +241,17 @@ public class MainActivity extends AppCompatActivity {
             public boolean onTouch(View v, MotionEvent event) {
                 switch(event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        forwardImg.setImageResource(R.drawable.button_up_select);
                         blockDirectionButtons(false, forwardImg);
                         robot.goForward();
                         break;
                     case MotionEvent.ACTION_UP:
+                        forwardImg.setImageResource(R.drawable.button_up);
                         blockDirectionButtons(true, forwardImg);
                         robot.goStop();
                         break;
                 }
-                return false;
+                return true;
             }
         });
 
@@ -221,27 +261,68 @@ public class MainActivity extends AppCompatActivity {
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        backhtImg.setImageResource(R.drawable.button_down_select);
                         blockDirectionButtons(false, backhtImg);
                         robot.goBack();
                         break;
                     case MotionEvent.ACTION_UP:
+                        backhtImg.setImageResource(R.drawable.button_down);
                         blockDirectionButtons(true, backhtImg);
                         robot.goStop();
                         break;
                 }
-                return false;
+                return true;
             }
         });
 
+
+
+
         setDisconnectComponent();
+        loadConfig();
         BTClient = new BluetoothClient(getApplicationContext(), handler, BluetoothAdapter.getDefaultAdapter());
         robot = new RobotControl(BTClient);
+
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.settings, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+
+            case R.id.menu_settings:
+                Intent i = new Intent(this, Prefs.class);
+                startActivityForResult(i, 0);
+                break;
+
+        }
+
+        return true;
+    }
+
+    private void loadConfig()
+    {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+        deviceName = prefs.getString("deviceName","Brak");
+        addressIP  = prefs.getString("addressCamera","192.168.1.1");
+    }
 
     private void setDisconnectComponent()
     {
+        connected = false;
+
         biegi.setEnabled(false);
+        speed1.setEnabled(false);
+        speed2.setEnabled(false);
+        speed3.setEnabled(false);
+        speed4.setEnabled(false);
+        speed5.setEnabled(false);
+
         forwardImg.setEnabled(false);
         backhtImg.setEnabled(false);
         leftImg.setEnabled(false);
@@ -258,9 +339,18 @@ public class MainActivity extends AppCompatActivity {
         cameraImg.setImageResource(R.drawable.nocapture);
     }
 
+
     private void setConnectedComponent()
     {
+        connected = true;
+
         biegi.setEnabled(true);
+        speed1.setEnabled(true);
+        speed2.setEnabled(true);
+        speed3.setEnabled(true);
+        speed4.setEnabled(true);
+        speed5.setEnabled(true);
+
         forwardImg.setEnabled(true);
         backhtImg.setEnabled(true);
         leftImg.setEnabled(true);
@@ -279,10 +369,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void blockDirectionButtons(boolean enabled, ImageView clickButton)
     {
-        if (enabled)
-            setSpeedImage(false);
-        else
-            setSpeedImage(true);
+        setSpeedImage(enabled);
 
         if (clickButton.getId() != forwardImg.getId())
             forwardImg.setEnabled(enabled);
@@ -322,6 +409,81 @@ public class MainActivity extends AppCompatActivity {
                     speedImg.setImageResource(R.drawable.speed5);
                     break;
             }
+        }
+    }
+
+    private void startRobot()
+    {
+        loadConfig();
+        if (BTClient.searchDevice(deviceName)){
+            BTClient.connect();
+        }
+    }
+
+    private void stopRobot()
+    {
+        if (BTClient.getState() == BluetoothClient.STATE_CONNECTED) {
+            robot.goStop();
+            BTClient.disconnect();
+        }
+
+        setDisconnectComponent();
+    }
+
+    private void onReceiveData(byte cmd, byte param)
+    {
+        switch (cmd){
+            //Odpowiedź na dostęp do maszyny
+            case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_INIT:
+                setConnectedComponent();
+                break;
+
+
+            case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_SET_MOTOR:
+                switch (param){
+                    case RobotProtocolConsts.PARAM_FORWARD:
+                        animImg.setBackgroundResource(R.drawable.anim_up);
+                        break;
+                    case RobotProtocolConsts.PARAM_BACK:
+                        animImg.setBackgroundResource(R.drawable.anim_empty);
+                        break;
+                    case RobotProtocolConsts.PARAM_LEFT:
+                        animImg.setBackgroundResource(R.drawable.anim_left);
+                        break;
+                    case RobotProtocolConsts.PARAM_RIGHT:
+                        animImg.setBackgroundResource(R.drawable.anim_right);
+                        break;
+                    case RobotProtocolConsts.PARAM_STOP:
+                        animation.stop();
+                        animImg.setBackgroundResource(R.drawable.anim_empty);
+                        break;
+
+                }
+
+                if (param != RobotProtocolConsts.PARAM_STOP) {
+                    animation = (AnimationDrawable) animImg.getBackground();
+                    animation.start();
+                }
+                break;
+
+            case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_SET_SPEED:
+                robot.speed = param;
+                break;
+
+            case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_SET_AUTO:
+
+                if (param == RobotProtocolConsts.PARAM_ON) {
+                    robot.pilot = true;
+                    setDisconnectComponent();
+                    autoSwitch.setChecked(true);
+                    autoSwitch.setEnabled(true);
+                }
+                    else
+                {
+                    robot.pilot = false;
+                    autoSwitch.setChecked(false);
+                }
+                break;
         }
     }
 }
