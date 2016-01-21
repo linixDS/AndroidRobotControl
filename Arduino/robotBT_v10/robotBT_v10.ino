@@ -1,17 +1,42 @@
 #include <Servo.h>
 
 /*USTAWIENIA MIKROPROCESORA*/
-#define Motor_PWM1     3
-#define Motor_IN1      4
-#define Motor_IN2      5
-#define Motor_PWM2     6
-#define Motor_IN3      7
-#define Motor_IN4      8
-#define SG90_Pin       9
-#define echo_Pin       10
-#define trig_Pin       11
-#define light_Pin      12
 
+#define Motor_PWM1     3  //Ustawienia prędkości lewego silnikiem
+
+#define Motor_IN1      4  //Pin sterujący lewym silnikiem
+#define Motor_IN2      5  //Pin sterujący lewym silnikiem
+
+#define Motor_PWM2     6  //Ustawienia prędkości prawym silnikiem
+#define Motor_IN3      7  //Pin sterujący prawym silnikiem
+#define Motor_IN4      8  //Pin sterujący prawym silnikiem
+
+#define SG90_Pin       9  //Pin sterujący servo mechanizmem SG90
+
+#define echo_Pin       10 //Pin sterującym czujnikiem odległości SR-04
+#define trig_Pin       11 //Pin sterującym czujnikiem odległości SR-04
+
+
+/*POLECENIA STEROWANIA PROBOTE
+ Przed przesłaniem jakiegokolwiek polecująca należy zalogować się do urządzenia podając jego kod
+ polecenie CMD_INIT 
+
+ 
+ PANEL STERUJĄCY MASTER                            ROBOT -SLAVE
+ ----------------------------------               ----------------------------
+  CMD_INIT    byte[0]=CMD_INIT       -------->    ODPOWIEDŹ
+              byte[1]=PARAM_CODE                  CMD_INIT + CMD_RESPONDE 
+                                     <--------    byte[0] = CMD_INIT + CMD_RESPONDE
+                                                  byte[1] = param speed //Ustawienie prędkości silników
+                                                  
+//Do przodu
+ CMD_SET_MOTOR  byte[0]=CMD_SET_MOTOR -------->    ODPOWIEDŹ
+                byte[1]=PARAM_FORWARD              CMD_SET_MOTOR + CMD_RESPONDE 
+                                     <--------    byte[0] = CMD_SET_MOTOR + CMD_RESPONDE
+                                                  byte[1] = PARAM_FORWARD
+                                                  
+              
+ */
 
 
 #define CMD_RESPONDE    100 //Do odpowiedzi stosujemy responde + kod CMD
@@ -21,41 +46,52 @@
 #define CMD_SET_MOTOR   20  //Sterowanie silnikami parametr LEFT, RIGHT, FORWARD, BACK, STOP
 #define CMD_SET_LIGHT   21 //Sterowanie oświetleniem parametr ON - wł OFF wył 
 #define CMD_SET_AUTO    22 //Właczenie trybu automatycznego parametr ON - wł OFF wył
+
+//Rezerwacja w wersji nr 2
 #define CMD_SET_EYES    23 //Ustawienie kierunków oczów parametr kąt 1-180
+
+//Rezerwacja w wersji nr 2
 #define CMD_GET_EYES    24 //Wysyłanie do Mastera odczytu odległości 0 -255 cm
+
+//Dostępna w wersji nr 1
 #define CMD_SET_SPEED   25 //Ustawienia obrótów silnika parametr SPEED1, SPEED2, SPEED3, SPEED4, SPEED5
 
 
-#define PARAM_CODE    101
-#define PARAM_ON      HIGH
-#define PARAM_OFF     LOW
+#define PARAM_CODE    101   //Kod dostępu uruchamiający procedurę kontrolowania pojazdu
+#define PARAM_ON      1     //Parametr właczenia np. AutoPilot świateł
+#define PARAM_OFF     0     //Parametr wyłaczenia
 
-#define PARAM_FORWARD 1
-#define PARAM_STOP    2
-#define PARAM_BACK    3
-#define PARAM_LEFT    4
-#define PARAM_RIGHT   5
+/*CMD_SET_MOTOR */
+#define PARAM_FORWARD 1     //Paramter do przedu
+#define PARAM_STOP    2     //Paramter zatrzymaj
+#define PARAM_BACK    3     //Paramter do tyłu
+#define PARAM_LEFT    4     //Paramter w lewo
+#define PARAM_RIGHT   5     //Paramter w prawo
 
-#define PARAM_SPEED1  1
+/*Parametry ustawiania prędkości CMD_SET_SPEED*/
+#define PARAM_SPEED1  1   
 #define PARAM_SPEED2  2
 #define PARAM_SPEED3  3
 #define PARAM_SPEED4  4
 #define PARAM_SPEED5  5
 
+
+/*Wartości  PWM dla silników*/
 #define MOTOR_SPEED1  50
 #define MOTOR_SPEED2  100
 #define MOTOR_SPEED3  150
 #define MOTOR_SPEED4  200
 #define MOTOR_SPEED5  255
 
+
 #define interval_time 250 
 
 /* Zmiene globaln */
 Servo SG90;
-byte MotorSpeed;
-byte MotorState;
-boolean Connected;
-boolean AutoRobot;
+byte MotorSpeed;    //Aktualna prędkość pojazdu
+byte MotorState;    //Stan silników 
+boolean Connected;  //Czy jest połączenie
+boolean AutoRobot;  //Czy włączony jest autopilot
 
 unsigned long prevTime = 0; 
 
@@ -65,16 +101,18 @@ void motor_set_speed(byte param);
 byte motor_get_speed();
 void motor_control(byte param);
 
+void motor_control_from_robot(byte param);
+
 /* FUNKCJA STERUJĄCE SERWO MECHANIZMEM SG90 */
 boolean SG90_set(byte param);
-/* FUNKCJA STERUJĄCA LED - NASTĘPNY ETAP */
-void light_set(byte param);
 
-/* FUNKCJA CZYTAJĄCA DYSTANC HC-SR04 WARTOŚĆ 0-255 CM GDZIE 255 BARDZO DALEKO */
+
+/* FUNKCJA CZYTAJĄCA DYSTANS HC-SR04 WARTOŚĆ 0-255 CM GDZIE 255 BARDZO DALEKO */
 byte distance_read();
 
 /* PRZETWARZANIE KOMEND ODEBRANYCH */
 void bluetooth_parse_command(byte cmd, byte param);
+void bluetooth_responde(byte buf[], byte len);
 
 /* FUNKCJE ROBOTA */
 void robot_cache_direction(byte param);
@@ -139,6 +177,9 @@ void loop() {
   
 }
 
+/*
+  Funkcja steruje silnikami
+*/
 void motor_control(byte param)
 {
     switch(param)
@@ -208,10 +249,93 @@ void motor_control(byte param)
           digitalWrite(Motor_IN3, LOW);
           digitalWrite(Motor_IN4, LOW);       
           break;     
-                
     }
 }
 
+
+/*
+  Funkcja steruje silnikami
+*/
+void motor_control_from_robot(byte param)
+{
+    switch(param)
+    {  
+      case PARAM_FORWARD:
+          MotorState = param;
+          //Motor 1
+          digitalWrite(Motor_IN1, HIGH);
+          digitalWrite(Motor_IN2, LOW);
+
+          //Motor 2
+          digitalWrite(Motor_IN3, HIGH);
+          digitalWrite(Motor_IN4, LOW);       
+          break;
+
+    case PARAM_STOP:
+          MotorState = param;
+          //Motor 1
+          digitalWrite(Motor_IN1, LOW);
+          digitalWrite(Motor_IN2, LOW);
+
+          //Motor 2
+          digitalWrite(Motor_IN3, LOW);
+          digitalWrite(Motor_IN4, LOW);       
+          break;
+
+     case PARAM_BACK:
+          MotorState = param;
+          //Motor 1
+          digitalWrite(Motor_IN1, LOW);
+          digitalWrite(Motor_IN2, HIGH);
+        
+          //Motor 2
+          digitalWrite(Motor_IN3, LOW);
+          digitalWrite(Motor_IN4, HIGH);  
+          break;      
+
+     case PARAM_LEFT:
+          MotorState = param;
+          //Motor 1
+          digitalWrite(Motor_IN1, HIGH);
+          digitalWrite(Motor_IN2, LOW);
+        
+          //Motor 2
+          digitalWrite(Motor_IN3, LOW);
+          digitalWrite(Motor_IN4, HIGH);  
+          break; 
+
+     case PARAM_RIGHT:
+          MotorState = param;
+            //Motor 1
+          digitalWrite(Motor_IN1, LOW);
+          digitalWrite(Motor_IN2, HIGH);
+        
+          //Motor 2
+          digitalWrite(Motor_IN3, HIGH);
+          digitalWrite(Motor_IN4, LOW);  
+          break;
+
+     default:
+          MotorState = PARAM_STOP;
+          //Motor 1
+          digitalWrite(Motor_IN1, LOW);
+          digitalWrite(Motor_IN2, LOW);
+
+          //Motor 2
+          digitalWrite(Motor_IN3, LOW);
+          digitalWrite(Motor_IN4, LOW);       
+          break;     
+    }
+
+     byte TX[2];
+     TX[0] = CMD_SET_MOTOR;
+     TX[1] = MotorState;
+     bluetooth_responde(TX,2);
+}
+
+/*
+  Funkcja steruje prędkością obrotową silników
+*/
 void motor_set_speed(byte param)
 {
     //PARAM_SPEED
@@ -240,6 +364,9 @@ void motor_set_speed(byte param)
     analogWrite(Motor_PWM2, MotorSpeed);
 }
 
+/*
+  Funkcja zwraca wprędkośc w numerze biegów
+*/
 byte motor_get_speed()
 {
     switch(MotorSpeed)
@@ -264,6 +391,24 @@ byte motor_get_speed()
     }  
 }
 
+/*
+  Funkcja przetwarza odebrane dane z odbiornika Bluetooth
+*/
+
+void bluetooth_responde(byte buf[], byte len)
+{
+  int sendBytes = Serial.write(buf, len);  
+  if (sendBytes < len)
+  {
+      if (MotorState != PARAM_STOP)
+        motor_control(PARAM_STOP);
+      if (AutoRobot)
+        AutoRobot = false;
+
+      Connected = false;
+  }
+}
+
 void bluetooth_parse_command(byte cmd, byte param)
 {
       byte TX[2];
@@ -278,7 +423,7 @@ void bluetooth_parse_command(byte cmd, byte param)
               {
                   TX[1] = motor_get_speed();
                   Connected = true;
-                  Serial.write(TX, 2);
+                  bluetooth_responde(TX, 2);
               }
               break;
               
@@ -287,15 +432,11 @@ void bluetooth_parse_command(byte cmd, byte param)
               {
                 motor_control(param);
                 TX[1] = MotorState;
-                Serial.write(TX, 2);
+                bluetooth_responde(TX, 2);
               }
               break;
                  
-        case CMD_SET_LIGHT: 
-              light_set(param);
-              TX[1] = LOW;
-              break;
-              
+             
         case CMD_SET_AUTO: //CMD_SET_AUTO
               if (param == PARAM_ON)
               {
@@ -309,34 +450,16 @@ void bluetooth_parse_command(byte cmd, byte param)
               }
              
              TX[1] = AutoRobot;
-             Serial.write(TX, 2);                  
+             bluetooth_responde(TX, 2);                  
              break;
                
-        case CMD_SET_EYES:
-            if (!AutoRobot)
-            {
-               if (SG90_set(param))
-               {
-                  TX[1] = param;
-                  Serial.write(TX, 2);
-               }
-             }   
-             break;
-
-        case CMD_GET_EYES:
-            if (!AutoRobot)
-            {
-               TX[1] = distance_read();
-                  Serial.write(TX, 2);
-            }                           
-            break;
 
         case CMD_SET_SPEED: 
               if (!AutoRobot)
                   motor_set_speed(param);
              
              TX[1] = motor_get_speed();
-             Serial.write(TX, 2);                  
+             bluetooth_responde(TX, 2);                  
              break;
             
       }
@@ -353,9 +476,6 @@ boolean SG90_set(byte param)
     return false;
 }
 
-void light_set(byte param)
-{
-}
 
 byte distance_read()
 {
@@ -381,21 +501,26 @@ void robot_cache_direction(byte param)
 {
     if ((param == PARAM_LEFT) || (param == PARAM_RIGHT))
     {
-        motor_control(param);
-        delay(1500);
-        motor_control(PARAM_STOP);
+        motor_control_from_robot(param);
+        delay(1000);
+        motor_control_from_robot(PARAM_STOP);
     }
 }
 
+
+/*Start robota w trybie auto */
 void robot_start()
 {
+   //Zatrzymuje robota
    if (MotorState != PARAM_STOP)
-       motor_control(PARAM_STOP);
+       motor_control_from_robot(PARAM_STOP);
     
    if (digitalRead(SG90_Pin) != 90)
-      SG90.write(90);       
+      SG90.write(90); 
+            
     prevTime = millis();
-   
+
+   //Sprawdzam dysense do przeszkody, który jest największy
    byte left_dis, right_dis, top_dis; 
    SG90_set(180);
    left_dis = distance_read();
@@ -404,10 +529,11 @@ void robot_start()
    SG90_set(90);  
    top_dis = distance_read();
 
+   //Jeśli któraś z 3 wartości jest wieksza od 30
    if ((top_dis > 30) || (left_dis > 30) || (right_dis > 30))
    {
         if ((top_dis >= left_dis) && (top_dis >= right_dis))
-            motor_control(PARAM_FORWARD);
+            motor_control_from_robot(PARAM_FORWARD);
         else
          if ((top_dis < left_dis) && (left_dis > right_dis))
             robot_cache_direction(PARAM_LEFT);
@@ -416,13 +542,14 @@ void robot_start()
               robot_cache_direction(PARAM_RIGHT);
    }
     else
-    motor_control(PARAM_BACK);
+    //Cofam do tyłu
+    motor_control_from_robot(PARAM_BACK);
 }
 
 void robot_stop()
 {
    if (MotorState != PARAM_STOP)
-       motor_control(PARAM_STOP);
+       motor_control_from_robot(PARAM_STOP);
     
     if (digitalRead(SG90_Pin) != 90)
       SG90.write(90);       
@@ -430,34 +557,51 @@ void robot_stop()
 
 void robot_control()
 {
-     
+    if (MotorState == PARAM_BACK)
+      motor_control_from_robot(PARAM_STOP);
+    
+    //Sprawdzam  czy jest przeszkoda 30 cm od pojazdu wartość 255 - więcej niż 2 metry
     byte top_dis = distance_read();
+    
     if (top_dis < 30)
     {
+        
         byte left_dis, right_dis;
+        
+        //Jest przeszkoda zatrzymuje pojazd
         if (MotorState != PARAM_STOP)
-            motor_control(PARAM_STOP);
-            
+            motor_control_from_robot(PARAM_STOP);
+
+        //Przesuwam czujnik w lewą stronę  sprawdzam odlełośc do najbliższej przeszkody
         SG90_set(180);
         left_dis = distance_read();
+        
+        //Przesuwam czujnik w prawą stronę  sprawdzam odlełośc do najbliższej przeszkody
         SG90_set(1);
         right_dis = distance_read();
+
+        //Przesuwam czujnik na środek
         SG90_set(90);
 
-
-        if ((left_dis > 30) && (right_dis > 30))
+        /*Jeżeli którakolwiek z wartości jest większa niż 30 cm
+        */
+        if ((left_dis > 30) || (right_dis > 30))
         {
+            /*Wartość lewa jest większa zmieniam kierunek pojazdu
+             * jeśli nie to w prawo
+             */
+            
             if (left_dis > right_dis)
               robot_cache_direction(PARAM_LEFT);
             else
               robot_cache_direction(PARAM_RIGHT);
         }
           else
-          motor_control(PARAM_BACK);
-        
+         /* żadna z wartość nie  jest odpowiednia cofam pojazd*/
+          motor_control_from_robot(PARAM_BACK);
     }
       else
     if (MotorState == PARAM_STOP)
-      motor_control(PARAM_FORWARD);
+      motor_control_from_robot(PARAM_FORWARD);
 }
 

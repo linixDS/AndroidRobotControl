@@ -163,4 +163,16 @@
         android:layout_alignWithParentIfMissing="false"
         android:layout_marginRight="170dp" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Large Text"
+        android:id="@+id/msgView"
+        android:layout_toRightOf="@+id/imageSpeed"
+        android:layout_alignRight="@+id/radioGroup"
+        android:layout_alignEnd="@+id/radioGroup"
+        android:gravity="center"
+        android:layout_below="@+id/switchAutoRobot" />
+
 </RelativeLayout>

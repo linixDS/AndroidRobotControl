@@ -9,6 +9,7 @@ import android.content.pm.ActivityInfo;
 import android.graphics.drawable.AnimationDrawable;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
@@ -38,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
     ImageView connectImg;
     ImageView animImg;
     AnimationDrawable animation;
+    TextView msgView;
+
     boolean connected = false;
 
     RadioGroup biegi;
@@ -50,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     RobotControl    robot;
     ProgressDialog connectionDialog;
     WifiManager wm;
+    CountDownTimer timer;
 
     String deviceName;
     String addressIP;
@@ -69,6 +73,21 @@ public class MainActivity extends AppCompatActivity {
                             connectionDialog = null;
 
                             robot.Init();
+                            timer = new CountDownTimer(2000, 1000) {
+                                @Override
+                                public void onTick(long l) {
+                                }
+
+                                @Override
+                                public void onFinish() {
+                                    if (!connected)
+                                    {
+                                        msgView.setText("Brak odpowiedzi z urządzenia");
+                                        connectImg.setImageResource(R.drawable.start);
+                                    }
+                                }
+                            }.start();
+
                             break;
                         case BluetoothClient.STATE_NONE:
                             if (connectionDialog != null)
@@ -137,6 +156,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        msgView   = (TextView) findViewById(R.id.msgView);
 
         speed1    = (RadioButton) findViewById(R.id.speed1);
         speed2    = (RadioButton) findViewById(R.id.speed2);
@@ -337,12 +358,15 @@ public class MainActivity extends AppCompatActivity {
         speedImg.setImageResource(R.drawable.speed0);
         connectImg.setImageResource(R.drawable.start);
         cameraImg.setImageResource(R.drawable.nocapture);
+
+        msgView.setText("");
     }
 
 
     private void setConnectedComponent()
     {
         connected = true;
+        msgView.setText(String.format("Połączenie z %s",deviceName));
 
         biegi.setEnabled(true);
         speed1.setEnabled(true);
@@ -365,6 +389,7 @@ public class MainActivity extends AppCompatActivity {
         speedImg.setImageResource(R.drawable.speed0);
         connectImg.setImageResource(R.drawable.stop);
         cameraImg.setImageResource(R.drawable.nocapture);
+        msgView.setText("");
     }
 
     private void blockDirectionButtons(boolean enabled, ImageView clickButton)
@@ -415,9 +440,13 @@ public class MainActivity extends AppCompatActivity {
     private void startRobot()
     {
         loadConfig();
-        if (BTClient.searchDevice(deviceName)){
+
+        if (BTClient.searchDevice(deviceName))
+        {
             BTClient.connect();
         }
+            else
+            msgView.setText("Brak połączenia");
     }
 
     private void stopRobot()
