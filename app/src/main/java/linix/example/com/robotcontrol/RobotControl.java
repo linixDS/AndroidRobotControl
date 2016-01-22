@@ -10,6 +10,7 @@ interface RobotProtocolConsts{
     public byte CMD_SET_EYES =   23;
     public byte CMD_GET_EYES =   24;
     public byte CMD_SET_SPEED=   25;
+    public byte CMD_GET_BATTERY = 26;
 
     public byte PARAM_CODE    = 101;
     public byte PARAM_ON      = 1;
@@ -26,6 +27,10 @@ interface RobotProtocolConsts{
     public byte PARAM_SPEED3  = 3;
     public byte PARAM_SPEED4  = 4;
     public byte PARAM_SPEED5  = 5;
+
+    public byte PARAM_BATTERY_LOW   = 1;
+    public byte PARAM_BATTERY_HALF  = 2;
+    public byte PARAM_BATTERY_FULL  = 3;
 }
 
 

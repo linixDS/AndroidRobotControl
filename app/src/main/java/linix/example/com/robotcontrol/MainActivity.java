@@ -20,6 +20,9 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.RadioButton;
@@ -38,8 +41,12 @@ public class MainActivity extends AppCompatActivity {
     ImageView speedImg;
     ImageView connectImg;
     ImageView animImg;
-    AnimationDrawable animation;
+    ImageView batteryImg;
+
     TextView msgView;
+
+    AnimationDrawable animation;
+    Animation animBattery;
 
     boolean connected = false;
 
@@ -100,10 +107,19 @@ public class MainActivity extends AppCompatActivity {
 
                 case Constants.MESSAGE_READ:
                     byte[] readBuf = (byte[]) msg.obj;
-                    if (readBuf.length == 2){
+                    if (readBuf.length >= 2)
+                    {
                         byte cmd    = readBuf[0];
                         byte param  = readBuf[1];
-                        onReceiveData(cmd, param);
+
+                        if (readBuf.length == 3)
+                        {
+                            byte param2  = readBuf[2];
+                            onReceiveData(cmd, param, param2);
+                        }
+                            else
+                            onReceiveData(cmd, param, (byte)0);
+
                     }
 
                     break;
@@ -158,6 +174,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         msgView   = (TextView) findViewById(R.id.msgView);
+
+        batteryImg= (ImageView) findViewById(R.id.batteryView);
 
         speed1    = (RadioButton) findViewById(R.id.speed1);
         speed2    = (RadioButton) findViewById(R.id.speed2);
@@ -303,7 +321,6 @@ public class MainActivity extends AppCompatActivity {
         loadConfig();
         BTClient = new BluetoothClient(getApplicationContext(), handler, BluetoothAdapter.getDefaultAdapter());
         robot = new RobotControl(BTClient);
-
     }
 
     @Override
@@ -406,6 +423,31 @@ public class MainActivity extends AppCompatActivity {
             rightImg.setEnabled(enabled);
     }
 
+    private void setBatteryState(byte state)
+    {
+        switch (state){
+            case RobotProtocolConsts.PARAM_BATTERY_LOW:
+                batteryImg.setImageResource(R.drawable.battery_low);
+                animBattery = new AlphaAnimation(1, 0);
+                animBattery.setDuration(500);
+                animBattery.setInterpolator(new LinearInterpolator());
+                animBattery.setRepeatCount(Animation.INFINITE);
+                animBattery.setRepeatMode(Animation.REVERSE);
+                batteryImg.startAnimation(animBattery);
+                break;
+
+            case RobotProtocolConsts.PARAM_BATTERY_HALF:
+                batteryImg.clearAnimation();
+                batteryImg.setImageResource(R.drawable.battery_half);
+                break;
+
+            case RobotProtocolConsts.PARAM_BATTERY_FULL:
+                batteryImg.clearAnimation();
+                batteryImg.setImageResource(R.drawable.battery_full);
+                break;
+        }
+    }
+
     private void setSpeedImage(boolean stopped)
     {
         if (stopped)
@@ -459,11 +501,13 @@ public class MainActivity extends AppCompatActivity {
         setDisconnectComponent();
     }
 
-    private void onReceiveData(byte cmd, byte param)
+    private void onReceiveData(byte cmd, byte param, byte param2)
     {
         switch (cmd){
             //Odpowiedź na dostęp do maszyny
             case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_INIT:
+                robot.speed = param;
+                setBatteryState(param2);
                 setConnectedComponent();
                 break;
 
@@ -512,6 +556,10 @@ public class MainActivity extends AppCompatActivity {
                     robot.pilot = false;
                     autoSwitch.setChecked(false);
                 }
+                break;
+
+            case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_GET_BATTERY:
+                setBatteryState(param);
                 break;
         }
     }

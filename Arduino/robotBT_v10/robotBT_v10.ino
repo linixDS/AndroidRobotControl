@@ -56,6 +56,8 @@
 //Dostępna w wersji nr 1
 #define CMD_SET_SPEED   25 //Ustawienia obrótów silnika parametr SPEED1, SPEED2, SPEED3, SPEED4, SPEED5
 
+//Rezerwacja w wersji nr 2
+#define CMD_GET_BATTERY    26 //Wysyłanie do Mastera odczytu onapięcia na baterii
 
 #define PARAM_CODE    101   //Kod dostępu uruchamiający procedurę kontrolowania pojazdu
 #define PARAM_ON      1     //Parametr właczenia np. AutoPilot świateł
@@ -75,6 +77,10 @@
 #define PARAM_SPEED4  4
 #define PARAM_SPEED5  5
 
+/*Parametry napięcia baterji CMD_SET_BATTERY*/
+#define PARAM_BATTERY_LOW  1
+#define PARAM_BATTERY_HALF 2
+#define PARAM_BATTERY_FULL 3
 
 /*Wartości  PWM dla silników*/
 #define MOTOR_SPEED1  50
@@ -411,7 +417,7 @@ void bluetooth_responde(byte buf[], byte len)
 
 void bluetooth_parse_command(byte cmd, byte param)
 {
-      byte TX[2];
+      byte TX[3];
       if ((!Connected) && (cmd != CMD_INIT))
           return;
           
@@ -422,8 +428,9 @@ void bluetooth_parse_command(byte cmd, byte param)
               if (param == PARAM_CODE) 
               {
                   TX[1] = motor_get_speed();
+                  TX[2] = PARAM_BATTERY_FULL; //Wersji nr 2 będzie odczyt i sprawdzanie baterii
                   Connected = true;
-                  bluetooth_responde(TX, 2);
+                  bluetooth_responde(TX, 3);
               }
               break;
               
