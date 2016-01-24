@@ -1,5 +1,6 @@
 package linix.example.com.robotcontrol;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
@@ -32,6 +33,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final int REQUEST_ENABLE_BT = 3;
 
     ImageView leftImg;
     ImageView rightImg;
@@ -80,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
                             connectionDialog = null;
 
                             robot.Init();
-                            timer = new CountDownTimer(2000, 1000) {
+                            timer = new CountDownTimer(5000, 2000) {
                                 @Override
                                 public void onTick(long l) {
                                 }
@@ -89,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
                                 public void onFinish() {
                                     if (!connected)
                                     {
+                                        BTClient.disconnect();
                                         msgView.setText("Brak odpowiedzi z urządzenia");
                                         connectImg.setImageResource(R.drawable.start);
                                     }
@@ -107,20 +111,14 @@ public class MainActivity extends AppCompatActivity {
 
                 case Constants.MESSAGE_READ:
                     byte[] readBuf = (byte[]) msg.obj;
-                    if (readBuf.length >= 2)
-                    {
-                        byte cmd    = readBuf[0];
-                        byte param  = readBuf[1];
+                    byte readBytes = (byte) msg.arg1;
 
-                        if (readBuf.length == 3)
-                        {
-                            byte param2  = readBuf[2];
-                            onReceiveData(cmd, param, param2);
-                        }
-                            else
-                            onReceiveData(cmd, param, (byte)0);
+                    byte cmd    = readBuf[0];
+                    byte param  = readBuf[1];
+                    Log.e("DATA", String.format("CMD %d PARAM %d", cmd, param));
 
-                    }
+                    onReceiveData(cmd, param);
+
 
                     break;
 
@@ -191,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
         connectImg.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (connected)
+                if (BTClient.getState() == BluetoothClient.STATE_CONNECTED)
                     stopRobot();
                 else
                     startRobot();
@@ -240,7 +238,6 @@ public class MainActivity extends AppCompatActivity {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         leftImg.setImageResource(R.drawable.button_left_select);
-
                         blockDirectionButtons(false, leftImg);
                         robot.goLeft();
                         break;
@@ -282,7 +279,7 @@ public class MainActivity extends AppCompatActivity {
                     case MotionEvent.ACTION_DOWN:
                         forwardImg.setImageResource(R.drawable.button_up_select);
                         blockDirectionButtons(false, forwardImg);
-                        robot.goForward();
+                       robot.goForward();
                         break;
                     case MotionEvent.ACTION_UP:
                         forwardImg.setImageResource(R.drawable.button_up);
@@ -319,7 +316,21 @@ public class MainActivity extends AppCompatActivity {
 
         setDisconnectComponent();
         loadConfig();
-        BTClient = new BluetoothClient(getApplicationContext(), handler, BluetoothAdapter.getDefaultAdapter());
+
+        BluetoothAdapter BTAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (BTAdapter == null) {
+            Toast.makeText(getApplicationContext(), "Brak adaptera bluetooth !", Toast.LENGTH_LONG).show();
+            finish();
+        }
+
+        if (!BTAdapter.isEnabled()) {
+            connectImg.setVisibility(View.INVISIBLE);
+            Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBluetooth, REQUEST_ENABLE_BT);
+        } else
+            connectImg.setVisibility(View.VISIBLE);
+
+        BTClient = new BluetoothClient(getApplicationContext(), handler, BTAdapter);
         robot = new RobotControl(BTClient);
     }
 
@@ -343,12 +354,29 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case REQUEST_ENABLE_BT:
+                // When the request to enable Bluetooth returns
+                if (resultCode == Activity.RESULT_OK) {
+                    connectImg.setVisibility(View.VISIBLE);
+                } else {
+                    Toast.makeText(getApplicationContext(), "Błąd: Bluetooth nie został włączony",
+                            Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+                break;
+        }
+    }
+
+
     private void loadConfig()
     {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
         deviceName = prefs.getString("deviceName","Brak");
         addressIP  = prefs.getString("addressCamera","192.168.1.1");
     }
+
 
     private void setDisconnectComponent()
     {
@@ -378,12 +406,36 @@ public class MainActivity extends AppCompatActivity {
 
         msgView.setText("");
     }
+    private void setDisconnectComponent2()
+    {
+        biegi.setEnabled(false);
+        speed1.setEnabled(false);
+        speed2.setEnabled(false);
+        speed3.setEnabled(false);
+        speed4.setEnabled(false);
+        speed5.setEnabled(false);
+
+        forwardImg.setEnabled(false);
+        backhtImg.setEnabled(false);
+        leftImg.setEnabled(false);
+        rightImg.setEnabled(false);
+
+        autoSwitch.setChecked(false);
+        autoSwitch.setEnabled(false);
+
+        cameraSwitch.setChecked(false);
+        cameraSwitch.setEnabled(false);
+
+        speedImg.setImageResource(R.drawable.speed0);
+        connectImg.setImageResource(R.drawable.start);
+        cameraImg.setImageResource(R.drawable.nocapture);
+    }
 
 
     private void setConnectedComponent()
     {
         connected = true;
-        msgView.setText(String.format("Połączenie z %s",deviceName));
+        msgView.setText(String.format("Połączenie z %s", deviceName));
 
         biegi.setEnabled(true);
         speed1.setEnabled(true);
@@ -406,7 +458,6 @@ public class MainActivity extends AppCompatActivity {
         speedImg.setImageResource(R.drawable.speed0);
         connectImg.setImageResource(R.drawable.stop);
         cameraImg.setImageResource(R.drawable.nocapture);
-        msgView.setText("");
     }
 
     private void blockDirectionButtons(boolean enabled, ImageView clickButton)
@@ -450,11 +501,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void setSpeedImage(boolean stopped)
     {
-        if (stopped)
-            speedImg.setImageResource(R.drawable.speed0);
+        if (stopped) {
+             speedImg.setImageResource(R.drawable.speed0);
+        }
         else
         {
-            switch (robot.getSpeed())
+             switch (robot.getSpeed())
             {
                 case 1:
                     speedImg.setImageResource(R.drawable.speed1);
@@ -483,8 +535,15 @@ public class MainActivity extends AppCompatActivity {
     {
         loadConfig();
 
+
         if (BTClient.searchDevice(deviceName))
         {
+            connectionDialog = new ProgressDialog(MainActivity.this);
+            connectionDialog.setMessage("Łączenie ...");
+            connectionDialog.setIndeterminate(false);
+            connectionDialog.setCancelable(false);
+            connectionDialog.show();
+
             BTClient.connect();
         }
             else
@@ -501,14 +560,14 @@ public class MainActivity extends AppCompatActivity {
         setDisconnectComponent();
     }
 
-    private void onReceiveData(byte cmd, byte param, byte param2)
+    private void onReceiveData(byte cmd, byte param)
     {
+
         switch (cmd){
             //Odpowiedź na dostęp do maszyny
             case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_INIT:
-                robot.speed = param;
-                setBatteryState(param2);
                 setConnectedComponent();
+                robot.speed = param;
                 break;
 
 
@@ -518,7 +577,7 @@ public class MainActivity extends AppCompatActivity {
                         animImg.setBackgroundResource(R.drawable.anim_up);
                         break;
                     case RobotProtocolConsts.PARAM_BACK:
-                        animImg.setBackgroundResource(R.drawable.anim_empty);
+                        animImg.setBackgroundResource(R.drawable.anim_back);
                         break;
                     case RobotProtocolConsts.PARAM_LEFT:
                         animImg.setBackgroundResource(R.drawable.anim_left);
@@ -527,17 +586,15 @@ public class MainActivity extends AppCompatActivity {
                         animImg.setBackgroundResource(R.drawable.anim_right);
                         break;
                     case RobotProtocolConsts.PARAM_STOP:
-                        animation.stop();
                         animImg.setBackgroundResource(R.drawable.anim_empty);
                         break;
 
                 }
 
-                if (param != RobotProtocolConsts.PARAM_STOP) {
-                    animation = (AnimationDrawable) animImg.getBackground();
-                    animation.start();
-                }
-                break;
+
+                AnimationDrawable animation = (AnimationDrawable) animImg.getBackground();
+                animation.start();
+                 break;
 
             case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_SET_SPEED:
                 robot.speed = param;
@@ -547,7 +604,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if (param == RobotProtocolConsts.PARAM_ON) {
                     robot.pilot = true;
-                    setDisconnectComponent();
+                    setDisconnectComponent2();
                     autoSwitch.setChecked(true);
                     autoSwitch.setEnabled(true);
                 }

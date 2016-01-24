@@ -13,8 +13,8 @@
 
 #define SG90_Pin       9  //Pin sterujący servo mechanizmem SG90
 
-#define echo_Pin       10 //Pin sterującym czujnikiem odległości SR-04
-#define trig_Pin       11 //Pin sterującym czujnikiem odległości SR-04
+#define echo_Pin       12 //Pin sterującym czujnikiem odległości SR-04
+#define trig_Pin       13 //Pin sterującym czujnikiem odległości SR-04
 
 
 /*POLECENIA STEROWANIA PROBOTE
@@ -28,6 +28,7 @@
               byte[1]=PARAM_CODE                  CMD_INIT + CMD_RESPONDE 
                                      <--------    byte[0] = CMD_INIT + CMD_RESPONDE
                                                   byte[1] = param speed //Ustawienie prędkości silników
+                                                  BYTE[2] = 3 baterry_full
                                                   
 //Do przodu
  CMD_SET_MOTOR  byte[0]=CMD_SET_MOTOR -------->    ODPOWIEDŹ
@@ -157,11 +158,16 @@ void setup() {
   
   analogWrite(Motor_PWM1, MotorSpeed);
   analogWrite(Motor_PWM2, MotorSpeed);
+
+  pinMode(SG90_Pin, OUTPUT);
+
+  pinMode(echo_Pin, INPUT);
+  pinMode(trig_Pin, OUTPUT);
 }
 
 void loop() {
   
-    byte RX[1];
+    byte RX[2];
     byte readBytes;
     
     //Sprawdzam czy są dane w buforze
@@ -334,7 +340,7 @@ void motor_control_from_robot(byte param)
     }
 
      byte TX[2];
-     TX[0] = CMD_SET_MOTOR;
+     TX[0] = CMD_RESPONDE + CMD_SET_MOTOR;
      TX[1] = MotorState;
      bluetooth_responde(TX,2);
 }
@@ -422,6 +428,7 @@ void bluetooth_parse_command(byte cmd, byte param)
           return;
           
       TX[0] = CMD_RESPONDE+cmd;
+      
       switch(cmd)
       {
           case CMD_INIT: 

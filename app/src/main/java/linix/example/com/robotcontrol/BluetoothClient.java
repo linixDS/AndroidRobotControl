@@ -11,12 +11,15 @@ import android.os.Bundle;
 import android.os.Message;
 import android.provider.SyncStateContract;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
 import java.util.UUID;
+
+import static android.support.v4.app.ActivityCompat.startActivityForResult;
 
 
 interface Constants{
@@ -55,7 +58,7 @@ public class BluetoothClient {
         this.BTState    = STATE_NONE;
 
         BTAdapter= adapter;
-    }
+ }
 
     private synchronized void setState(int state){
         this.BTState = state;
@@ -272,18 +275,21 @@ private class BluetoothConnectingThread extends Thread{
 
         public void run(){
             byte[] buffer = new byte[1024];
-            int bytes;
+            int bytes = 0;
 
             while (true){
                 try{
-                    bytes = mInStream.read(buffer);
-                    if (bytes > 0){
-                        String data = new String(buffer);
+                    if (mInStream.available() > 1) {
+                        bytes = mInStream.read(buffer);
+                        Log.e("RECV DATA",String.format("Size : %d",bytes));
+                        if (bytes == 2) {
+                            BTHandler.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer).sendToTarget();
+                        }
                     }
-                    BTHandler.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer).sendToTarget();
+
                 } catch (IOException e){
                     onSocketConnectionLost();
-                    Log.d("EXCEPTION threadConnected: ", e.getMessage());
+                    Log.e("EXCEPTION threadConnected: ", e.getMessage());
                     break;
                 }
 
@@ -293,6 +299,7 @@ private class BluetoothConnectingThread extends Thread{
         public void write(byte[] buffer){
             try{
                 mOutStream.write(buffer);
+                Log.e("BLUETOOTH","Send data");
                 BTHandler.obtainMessage(Constants.MESSAGE_WRITE, -1, -1, buffer).sendToTarget();
             } catch (IOException e){
 

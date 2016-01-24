@@ -2,15 +2,18 @@ package linix.example.com.robotcontrol;
 
 interface RobotProtocolConsts{
     public static final byte CMD_RESPONDE = 100;
-    public  static final byte CMD_INIT   =   10;
 
+
+    public  static final byte CMD_INIT   =   10;
     public byte CMD_SET_MOTOR=   20;
-    public byte CMD_SET_LIGHT=   21;
-    public byte CMD_SET_AUTO =   22;
-    public byte CMD_SET_EYES =   23;
-    public byte CMD_GET_EYES =   24;
-    public byte CMD_SET_SPEED=   25;
-    public byte CMD_GET_BATTERY = 26;
+    public byte CMD_SET_AUTO =   21;
+    public byte CMD_SET_SPEED=   22;
+    public byte CMD_GET_BATTERY = 23;
+    public byte CMD_SET_LIGHT=   24;
+    public byte CMD_SET_EYES =   25;
+    public byte CMD_GET_EYES =   26;
+
+
 
     public byte PARAM_CODE    = 101;
     public byte PARAM_ON      = 1;
@@ -112,9 +115,6 @@ public class RobotControl {
     {
         byte[] TX;
 
-        if (this.BTClient.getState() != BluetoothClient.STATE_CONNECTED)
-            return;
-
         TX = new byte[2];
         TX[0] = RobotProtocolConsts.CMD_SET_MOTOR;
         TX[1] = RobotProtocolConsts.PARAM_BACK;
@@ -124,9 +124,6 @@ public class RobotControl {
     public void goStop()
     {
         byte[] TX;
-
-        if (this.BTClient.getState() != BluetoothClient.STATE_CONNECTED)
-            return;
 
         TX = new byte[2];
         TX[0] = RobotProtocolConsts.CMD_SET_MOTOR;
@@ -138,9 +135,6 @@ public class RobotControl {
     {
         byte[] TX;
 
-        if (this.BTClient.getState() != BluetoothClient.STATE_CONNECTED)
-            return;
-
         TX = new byte[2];
         TX[0] = RobotProtocolConsts.CMD_SET_MOTOR;
         TX[1] = RobotProtocolConsts.PARAM_LEFT;
@@ -150,9 +144,6 @@ public class RobotControl {
     public void goRight()
     {
         byte[] TX;
-
-        if (this.BTClient.getState() != BluetoothClient.STATE_CONNECTED)
-            return;
 
         TX = new byte[2];
         TX[0] = RobotProtocolConsts.CMD_SET_MOTOR;
