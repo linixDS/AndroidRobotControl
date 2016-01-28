@@ -24,18 +24,25 @@ import android.view.Window;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
+import android.widget.ViewSwitcher;
+
+import org.w3c.dom.Text;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_ENABLE_BT = 3;
 
+    //Warstawa 1
     ImageView leftImg;
     ImageView rightImg;
     ImageView forwardImg;
@@ -48,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
     TextView msgView;
 
+    ViewSwitcher switcher;
     AnimationDrawable animation;
     Animation animBattery;
 
@@ -56,8 +64,17 @@ public class MainActivity extends AppCompatActivity {
     RadioGroup biegi;
     RadioButton speed1, speed2, speed3, speed4, speed5;
 
-    Switch cameraSwitch;
-    Switch autoSwitch;
+    ToggleButton cameraSwitch;
+    ToggleButton driverButton;
+    ToggleButton autoSwitch;
+    ToggleButton ledSwitch;
+
+
+    //Warstwa 2
+    ImageView   radarImg;
+    SeekBar     posBar;
+    Button      setSG90Btn, getSR04Btn, prevBtn;
+    TextView    distanceText, valueText;
 
     BluetoothClient BTClient;
     RobotControl    robot;
@@ -82,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
                                 connectionDialog.dismiss();
                             connectionDialog = null;
 
-                            robot.Init();
+                            robot.Connect();
                             timer = new CountDownTimer(5000, 2000) {
                                 @Override
                                 public void onTick(long l) {
@@ -118,8 +135,6 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("DATA", String.format("CMD %d PARAM %d", cmd, param));
 
                     onReceiveData(cmd, param);
-
-
                     break;
 
                 case Constants.MESSAGE_WRITE:
@@ -141,16 +156,16 @@ public class MainActivity extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(R.layout.activity_main);
 
-
         wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        wm.setWifiEnabled (true);
+        wm.setWifiEnabled(true);
 
+        switcher = (ViewSwitcher) findViewById(R.id.viewSwitcher);
 
         biegi     = (RadioGroup) findViewById(R.id.radioGroup);
         biegi.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                switch (checkedId){
+                switch (checkedId) {
                     case R.id.speed1:
                         robot.setSpeed(1);
                         break;
@@ -172,7 +187,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         msgView   = (TextView) findViewById(R.id.msgView);
-
         batteryImg= (ImageView) findViewById(R.id.batteryView);
 
         speed1    = (RadioButton) findViewById(R.id.speed1);
@@ -182,10 +196,11 @@ public class MainActivity extends AppCompatActivity {
         speed5    = (RadioButton) findViewById(R.id.speed5);
 
         cameraImg = (ImageView) findViewById(R.id.imageCamera);
+
         speedImg  = (ImageView) findViewById(R.id.imageSpeed);
         animImg   = (ImageView) findViewById(R.id.animView);
-        connectImg= (ImageView) findViewById(R.id.imageConnect);
 
+        connectImg= (ImageView) findViewById(R.id.imageConnect);
         connectImg.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -196,38 +211,55 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        autoSwitch = (Switch) findViewById(R.id.switchAutoRobot);
-        autoSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+
+        autoSwitch = (ToggleButton) findViewById(R.id.autoSwitch);
+        autoSwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (autoSwitch.isChecked())
+                    robot.autoPilot(true);
+                else
+                    robot.autoPilot(false);
+            }
+        });
+
+
+        ledSwitch = (ToggleButton) findViewById(R.id.ledSwitch);
+        ledSwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (ledSwitch.isChecked())
+                    robot.onLED();
+                else
+                    robot.offLED();
+            }
+        });
+
+
+        cameraSwitch = (ToggleButton) findViewById(R.id.cameraSwitch);
+        cameraSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked){
-                    robot.autoPilot(true);
-                }
-                else
-                {
-                    if (robot.pilot == true)
-                        robot.autoPilot(false);
+                if (isChecked) {
+                    if (wm.isWifiEnabled()) {
+
+                    } else
+                        cameraSwitch.setChecked(false);
+                } else {
+                    cameraImg.setImageResource(R.drawable.nocapture);
                 }
 
             }
         });
 
-        cameraSwitch = (Switch) findViewById(R.id.switchCamera);
-        cameraSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        driverButton = (ToggleButton) findViewById(R.id.driverButton);
+        driverButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked){
-                    if (wm.isWifiEnabled()){
-
-                    }
-                        else
-                        cameraSwitch.setChecked(false);
-                }
-                    else
-                {
-                    cameraImg.setImageResource(R.drawable.nocapture);
-                }
-
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                if (isChecked)
+                    switcher.showNext();
+                else
+                    switcher.showPrevious();
             }
         });
 
@@ -313,15 +345,47 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+        //------------------------------------------------------------------------------------------------------------
 
+        radarImg = (ImageView) findViewById(R.id.radarImg);
+        radarImg.setRotation(90);
+
+        posBar   = (SeekBar) findViewById(R.id.posBar);
+        posBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                radarImg.setRotation(i);
+                valueText.setText(String.format("%d st.", i));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+        distanceText = (TextView) findViewById(R.id.distanceText);
+        valueText    = (TextView) findViewById(R.id.valueText);
+        setSG90Btn   = (Button) findViewById(R.id.setSG90Btn);
+        getSR04Btn   = (Button) findViewById(R.id.getSR04Btn);
+        prevBtn      = (Button) findViewById(R.id.prevButton);
+
+
+        //------------------------------------------------------------------------------------------------------------
         setDisconnectComponent();
         loadConfig();
 
+/*
         BluetoothAdapter BTAdapter = BluetoothAdapter.getDefaultAdapter();
         if (BTAdapter == null) {
             Toast.makeText(getApplicationContext(), "Brak adaptera bluetooth !", Toast.LENGTH_LONG).show();
-            finish();
+           finish();
         }
+
 
         if (!BTAdapter.isEnabled()) {
             connectImg.setVisibility(View.INVISIBLE);
@@ -331,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
             connectImg.setVisibility(View.VISIBLE);
 
         BTClient = new BluetoothClient(getApplicationContext(), handler, BTAdapter);
-        robot = new RobotControl(BTClient);
+        robot = new RobotControl(BTClient); */
     }
 
     @Override
@@ -348,7 +412,6 @@ public class MainActivity extends AppCompatActivity {
                 Intent i = new Intent(this, Prefs.class);
                 startActivityForResult(i, 0);
                 break;
-
         }
 
         return true;
@@ -388,6 +451,7 @@ public class MainActivity extends AppCompatActivity {
         speed3.setEnabled(false);
         speed4.setEnabled(false);
         speed5.setEnabled(false);
+        ledSwitch.setEnabled(false);
 
         forwardImg.setEnabled(false);
         backhtImg.setEnabled(false);
@@ -406,7 +470,7 @@ public class MainActivity extends AppCompatActivity {
 
         msgView.setText("");
     }
-    private void setDisconnectComponent2()
+    private void setDisconnectComponent_autoPilot()
     {
         biegi.setEnabled(false);
         speed1.setEnabled(false);
@@ -431,6 +495,30 @@ public class MainActivity extends AppCompatActivity {
         cameraImg.setImageResource(R.drawable.nocapture);
     }
 
+    private void setConnectedComponent_autoPilot()
+    {
+        biegi.setEnabled(true);
+        speed1.setEnabled(true);
+        speed2.setEnabled(true);
+        speed3.setEnabled(true);
+        speed4.setEnabled(true);
+        speed5.setEnabled(true);
+
+        forwardImg.setEnabled(true);
+        backhtImg.setEnabled(true);
+        leftImg.setEnabled(true);
+        rightImg.setEnabled(true);
+
+        autoSwitch.setEnabled(true);
+        ledSwitch.setEnabled(true);
+
+        cameraSwitch.setChecked(false);
+        cameraSwitch.setEnabled(true);
+
+        speedImg.setImageResource(R.drawable.speed0);
+        connectImg.setImageResource(R.drawable.stop);
+        cameraImg.setImageResource(R.drawable.nocapture);
+    }
 
     private void setConnectedComponent()
     {
@@ -451,6 +539,8 @@ public class MainActivity extends AppCompatActivity {
 
         autoSwitch.setChecked(false);
         autoSwitch.setEnabled(true);
+        ledSwitch.setEnabled(true);
+        ledSwitch.setChecked(false);
 
         cameraSwitch.setChecked(false);
         cameraSwitch.setEnabled(true);
@@ -485,6 +575,8 @@ public class MainActivity extends AppCompatActivity {
                 animBattery.setRepeatCount(Animation.INFINITE);
                 animBattery.setRepeatMode(Animation.REVERSE);
                 batteryImg.startAnimation(animBattery);
+
+                Toast.makeText(getApplicationContext(), "Niski poziom baterii", Toast.LENGTH_LONG).show();
                 break;
 
             case RobotProtocolConsts.PARAM_BATTERY_HALF:
@@ -552,8 +644,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void stopRobot()
     {
-        if (BTClient.getState() == BluetoothClient.STATE_CONNECTED) {
-            robot.goStop();
+        if (BTClient.getState() == BluetoothClient.STATE_CONNECTED)
+        {
+            robot.Disconnect();
             BTClient.disconnect();
         }
 
@@ -601,22 +694,25 @@ public class MainActivity extends AppCompatActivity {
                 break;
 
             case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_SET_AUTO:
-
                 if (param == RobotProtocolConsts.PARAM_ON) {
-                    robot.pilot = true;
-                    setDisconnectComponent2();
+                    setDisconnectComponent_autoPilot();
                     autoSwitch.setChecked(true);
-                    autoSwitch.setEnabled(true);
-                }
-                    else
+                } else
                 {
-                    robot.pilot = false;
+                    setConnectedComponent_autoPilot();
                     autoSwitch.setChecked(false);
                 }
                 break;
 
             case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_GET_BATTERY:
                 setBatteryState(param);
+                break;
+
+            case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_SET_LIGHT:
+                if (param == RobotProtocolConsts.PARAM_OFF)
+                    ledSwitch.setChecked(false);
+                else
+                    ledSwitch.setChecked(true);
                 break;
         }
     }

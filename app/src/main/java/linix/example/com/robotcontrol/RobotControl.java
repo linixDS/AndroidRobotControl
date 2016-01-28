@@ -5,6 +5,7 @@ interface RobotProtocolConsts{
 
 
     public  static final byte CMD_INIT   =   10;
+    public byte CMD_CTRL     =   11;
     public byte CMD_SET_MOTOR=   20;
     public byte CMD_SET_AUTO =   21;
     public byte CMD_SET_SPEED=   22;
@@ -18,6 +19,7 @@ interface RobotProtocolConsts{
     public byte PARAM_CODE    = 101;
     public byte PARAM_ON      = 1;
     public byte PARAM_OFF     = 0;
+    public byte PARAM_TEST    = 2;
 
     public byte PARAM_FORWARD = 1;
     public byte PARAM_STOP    = 2;
@@ -40,8 +42,7 @@ interface RobotProtocolConsts{
 public class RobotControl {
 
     private BluetoothClient BTClient;
-    public int speed = 5;
-    public boolean pilot = false;
+    public int speed = 3;
 
     public RobotControl(BluetoothClient client)
     {
@@ -85,7 +86,7 @@ public class RobotControl {
         return this.speed;
     }
 
-    public void Init()
+    public void Connect()
     {
         byte[] TX;
 
@@ -95,6 +96,19 @@ public class RobotControl {
         TX = new byte[2];
         TX[0] = RobotProtocolConsts.CMD_INIT;
         TX[1] = RobotProtocolConsts.PARAM_CODE;
+        this.BTClient.write(TX);
+    }
+
+    public void Disconnect()
+    {
+        byte[] TX;
+
+        if (this.BTClient.getState() != BluetoothClient.STATE_CONNECTED)
+            return;
+
+        TX = new byte[2];
+        TX[0] = RobotProtocolConsts.CMD_CTRL;
+        TX[1] = RobotProtocolConsts.PARAM_OFF;
         this.BTClient.write(TX);
     }
 
@@ -151,5 +165,41 @@ public class RobotControl {
         this.BTClient.write(TX);
     }
 
+    public void onLED()
+    {
+        byte[] TX;
 
+        TX = new byte[2];
+        TX[0] = RobotProtocolConsts.CMD_SET_LIGHT;
+        TX[1] = RobotProtocolConsts.PARAM_ON;
+        this.BTClient.write(TX);
+    }
+
+    public void offLED()
+    {
+        byte[] TX;
+
+        TX = new byte[2];
+        TX[0] = RobotProtocolConsts.CMD_SET_LIGHT;
+        TX[1] = RobotProtocolConsts.PARAM_OFF;
+        this.BTClient.write(TX);
+    }
+
+    public void setSG90(byte value)
+    {
+        byte[] TX;
+        TX = new byte[2];
+        TX[0] = RobotProtocolConsts.CMD_SET_EYES;
+        TX[1] = value;
+        this.BTClient.write(TX);
+    }
+
+    public void getDistance()
+    {
+        byte[] TX;
+        TX = new byte[2];
+        TX[0] = RobotProtocolConsts.CMD_GET_EYES;
+        TX[1] = 0;
+        this.BTClient.write(TX);
+    }
 }

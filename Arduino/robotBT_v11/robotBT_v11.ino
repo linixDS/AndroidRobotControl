@@ -291,7 +291,9 @@ void motor_control_from_robot(byte param)
 
           //Motor 2
           digitalWrite(Motor_IN3, LOW);
-          digitalWrite(Motor_IN4, LOW);       
+          digitalWrite(Motor_IN4, LOW);   
+
+          delay(20);
           break;
 
      case PARAM_BACK:
@@ -335,7 +337,8 @@ void motor_control_from_robot(byte param)
 
           //Motor 2
           digitalWrite(Motor_IN3, LOW);
-          digitalWrite(Motor_IN4, LOW);       
+          digitalWrite(Motor_IN4, LOW);   
+          delay(20);    
           break;     
     }
 
@@ -457,7 +460,11 @@ void bluetooth_parse_command(byte cmd, byte param)
         case CMD_SET_AUTO: //CMD_SET_AUTO
               if (param == PARAM_ON)
               {
-                 AutoRobot = true;
+                 if (AutoRobot)
+                    AutoRobot = false;
+                 else
+                    AutoRobot = true;
+                    
                  robot_start();
               }
               else
@@ -487,6 +494,7 @@ boolean SG90_set(byte param)
     if ((param > 0) && (param < 181))
     {
         SG90.write(param);
+        delay(20);
         return true;
     }
       else
