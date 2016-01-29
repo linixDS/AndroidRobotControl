@@ -12,6 +12,15 @@
             android:dialogTitle="Wprowadź nazwę urządzenia Bluetooth"
             />
 
+        <EditTextPreference
+            android:key="deviceAddress"
+            android:title="Kod dostępu"
+            android:summary=""
+            android:dialogTitle="Wprowadź kod dostępu do urządzenia"
+            android:inputType="number"
+            android:maxLength="3"
+            />
+
     </PreferenceCategory>
 
     <PreferenceCategory

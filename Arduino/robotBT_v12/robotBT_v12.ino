@@ -184,6 +184,8 @@ void setup() {
   Serial.begin(9600);
   
   SG90.attach(SG90_Pin);
+
+  pinMode(A0, INPUT);
   
   pinMode(Motor_PWM1, OUTPUT);
   pinMode(Motor_PWM2, OUTPUT);
@@ -296,7 +298,9 @@ void motor_control(byte param)
 
           //Motor 2
           digitalWrite(Motor_IN3, LOW);
-          digitalWrite(Motor_IN4, LOW);       
+          digitalWrite(Motor_IN4, LOW);  
+          
+          delay(50);     
           break;
 
      case PARAM_BACK:
@@ -376,7 +380,7 @@ void motor_control_from_robot(byte param)
                   digitalWrite(Motor_IN3, LOW);
                   digitalWrite(Motor_IN4, LOW);   
         
-                  delay(100);
+                  delay(50);
                   break;
         
              case PARAM_BACK:
@@ -635,7 +639,7 @@ void SG90_set(byte param)
     if ((param > 0) && (param < 181))
     {
         SG90.write(param);
-        delay(100);
+        delay(50);
     }
 }
 
@@ -656,6 +660,8 @@ void get_battery_life()
             BatteryLife = PARAM_BATTERY_LOW;
               
     }
+    
+   prevTime2 = millis();
 }
 
 
@@ -807,6 +813,8 @@ void robot_control()
       else
     if (MotorState == PARAM_STOP)
       motor_control_from_robot(PARAM_FORWARD);
+
+    prevTime = millis();  
 }
 
 

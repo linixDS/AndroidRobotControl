@@ -86,7 +86,7 @@ public class RobotControl {
         return this.speed;
     }
 
-    public void Connect()
+    public void Connect(byte code)
     {
         byte[] TX;
 
@@ -95,7 +95,7 @@ public class RobotControl {
 
         TX = new byte[2];
         TX[0] = RobotProtocolConsts.CMD_INIT;
-        TX[1] = RobotProtocolConsts.PARAM_CODE;
+        TX[1] = code;
         this.BTClient.write(TX);
     }
 
@@ -190,7 +190,7 @@ public class RobotControl {
         byte[] TX;
         TX = new byte[2];
         TX[0] = RobotProtocolConsts.CMD_SET_EYES;
-        TX[1] = value;
+        TX[1] = (byte)(180 - value);
         this.BTClient.write(TX);
     }
 
@@ -200,6 +200,15 @@ public class RobotControl {
         TX = new byte[2];
         TX[0] = RobotProtocolConsts.CMD_GET_EYES;
         TX[1] = 0;
+        this.BTClient.write(TX);
+    }
+
+    public void runDiagnostic()
+    {
+        byte[] TX;
+        TX = new byte[2];
+        TX[0] = RobotProtocolConsts.CMD_CTRL;
+        TX[1] = RobotProtocolConsts.PARAM_TEST;
         this.BTClient.write(TX);
     }
 }

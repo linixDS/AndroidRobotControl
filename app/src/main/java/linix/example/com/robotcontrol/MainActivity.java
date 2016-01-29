@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
     RadioButton speed1, speed2, speed3, speed4, speed5;
 
     ToggleButton cameraSwitch;
-    ToggleButton driverButton;
+    Button driverButton;
     ToggleButton autoSwitch;
     ToggleButton ledSwitch;
 
@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
     //Warstwa 2
     ImageView   radarImg;
     SeekBar     posBar;
-    Button      setSG90Btn, getSR04Btn, prevBtn;
+    Button      setSG90Btn, getSR04Btn, prevBtn, diagBtn;
     TextView    distanceText, valueText;
 
     BluetoothClient BTClient;
@@ -84,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
 
     String deviceName;
     String addressIP;
+    byte deviceAddress;
 
     private final Handler handler = new Handler(){
 
@@ -99,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
                                 connectionDialog.dismiss();
                             connectionDialog = null;
 
-                            robot.Connect();
+                            robot.Connect(deviceAddress);
                             timer = new CountDownTimer(5000, 2000) {
                                 @Override
                                 public void onTick(long l) {
@@ -132,7 +133,6 @@ public class MainActivity extends AppCompatActivity {
 
                     byte cmd    = readBuf[0];
                     byte param  = readBuf[1];
-                    Log.e("DATA", String.format("CMD %d PARAM %d", cmd, param));
 
                     onReceiveData(cmd, param);
                     break;
@@ -252,14 +252,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        driverButton = (ToggleButton) findViewById(R.id.driverButton);
-        driverButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        driverButton = (Button) findViewById(R.id.driverBtn);
+        driverButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-                if (isChecked)
-                    switcher.showNext();
-                else
-                    switcher.showPrevious();
+            public void onClick(View view) {
+                switcher.showNext();
             }
         });
 
@@ -368,18 +365,47 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
         distanceText = (TextView) findViewById(R.id.distanceText);
         valueText    = (TextView) findViewById(R.id.valueText);
+
         setSG90Btn   = (Button) findViewById(R.id.setSG90Btn);
+        setSG90Btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                robot.setSG90((byte) posBar.getProgress());
+            }
+        });
+
         getSR04Btn   = (Button) findViewById(R.id.getSR04Btn);
+        getSR04Btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                robot.getDistance();
+            }
+        });
+
         prevBtn      = (Button) findViewById(R.id.prevButton);
+        prevBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                switcher.showPrevious();
+            }
+        });
+        diagBtn      = (Button) findViewById(R.id.diagnosticBtn);
+        diagBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                robot.runDiagnostic();
+            }
+        });
 
 
         //------------------------------------------------------------------------------------------------------------
         setDisconnectComponent();
         loadConfig();
 
-/*
+
         BluetoothAdapter BTAdapter = BluetoothAdapter.getDefaultAdapter();
         if (BTAdapter == null) {
             Toast.makeText(getApplicationContext(), "Brak adaptera bluetooth !", Toast.LENGTH_LONG).show();
@@ -395,7 +421,7 @@ public class MainActivity extends AppCompatActivity {
             connectImg.setVisibility(View.VISIBLE);
 
         BTClient = new BluetoothClient(getApplicationContext(), handler, BTAdapter);
-        robot = new RobotControl(BTClient); */
+        robot = new RobotControl(BTClient);
     }
 
     @Override
@@ -420,7 +446,7 @@ public class MainActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
             case REQUEST_ENABLE_BT:
-                // When the request to enable Bluetooth returns
+
                 if (resultCode == Activity.RESULT_OK) {
                     connectImg.setVisibility(View.VISIBLE);
                 } else {
@@ -438,6 +464,12 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
         deviceName = prefs.getString("deviceName","Brak");
         addressIP  = prefs.getString("addressCamera","192.168.1.1");
+        String code = prefs.getString("deviceAddress", "101");
+        int codeInt = Integer.valueOf(code);
+        if (codeInt >= 0 && codeInt <= 255)
+            deviceAddress = (byte)codeInt;
+        else
+            deviceAddress = 101;
     }
 
 
@@ -469,6 +501,12 @@ public class MainActivity extends AppCompatActivity {
         cameraImg.setImageResource(R.drawable.nocapture);
 
         msgView.setText("");
+
+        diagBtn.setEnabled(false);
+        posBar.setEnabled(false);
+        getSR04Btn.setEnabled(false);
+        setSG90Btn.setEnabled(false);
+        driverButton.setEnabled(false);
     }
     private void setDisconnectComponent_autoPilot()
     {
@@ -493,6 +531,12 @@ public class MainActivity extends AppCompatActivity {
         speedImg.setImageResource(R.drawable.speed0);
         connectImg.setImageResource(R.drawable.start);
         cameraImg.setImageResource(R.drawable.nocapture);
+
+        diagBtn.setEnabled(false);
+        posBar.setEnabled(false);
+        getSR04Btn.setEnabled(false);
+        setSG90Btn.setEnabled(false);
+        driverButton.setEnabled(false);
     }
 
     private void setConnectedComponent_autoPilot()
@@ -518,6 +562,11 @@ public class MainActivity extends AppCompatActivity {
         speedImg.setImageResource(R.drawable.speed0);
         connectImg.setImageResource(R.drawable.stop);
         cameraImg.setImageResource(R.drawable.nocapture);
+
+        diagBtn.setEnabled(true);
+        posBar.setEnabled(true);
+        getSR04Btn.setEnabled(true);
+        setSG90Btn.setEnabled(true);
     }
 
     private void setConnectedComponent()
@@ -548,6 +597,12 @@ public class MainActivity extends AppCompatActivity {
         speedImg.setImageResource(R.drawable.speed0);
         connectImg.setImageResource(R.drawable.stop);
         cameraImg.setImageResource(R.drawable.nocapture);
+
+        diagBtn.setEnabled(true);
+        posBar.setEnabled(true);
+        getSR04Btn.setEnabled(true);
+        setSG90Btn.setEnabled(true);
+        driverButton.setEnabled(true);
     }
 
     private void blockDirectionButtons(boolean enabled, ImageView clickButton)
@@ -714,6 +769,24 @@ public class MainActivity extends AppCompatActivity {
                 else
                     ledSwitch.setChecked(true);
                 break;
+
+            case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_CTRL:
+                if (param == RobotProtocolConsts.PARAM_TEST)
+                    Toast.makeText(getApplicationContext(), "Uruchomiono diagnostykę układu", Toast.LENGTH_LONG).show();
+                break;
+
+            case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_SET_EYES:
+                Toast.makeText(getApplicationContext(), String.format("Ustanowiono nową pozycję dla SG90 - kąt: %d",param+180), Toast.LENGTH_LONG).show();
+                break;
+
+            case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_GET_EYES:
+                if (param == 255)
+                    distanceText.setText("> 250 cm");
+                else
+                    distanceText.setText(String.format("%d cm",param));
+                Toast.makeText(getApplicationContext(), "Odebrano dane z czujnika odległości", Toast.LENGTH_LONG).show();
+                break;
+
         }
     }
 }

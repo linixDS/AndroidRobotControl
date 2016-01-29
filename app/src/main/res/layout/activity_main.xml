@@ -6,6 +6,245 @@
     android:layout_height="fill_parent">
 
 
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="linix.example.com.robotcontrol.MainActivity"
+    android:background="@drawable/robot_image"
+    android:paddingLeft="10dp"
+    android:paddingBottom="10dp"
+    android:paddingRight="10dp"
+    android:paddingTop="10dp">
+
+
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:id="@+id/imageLeft"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:src="@drawable/button_left"
+        android:maxHeight="50dp"
+        android:maxWidth="50dp"
+        android:scaleType="fitXY" />
+
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="18000dp"
+        android:id="@+id/imageRight"
+        android:layout_alignTop="@+id/imageBack"
+        android:layout_toRightOf="@+id/imageBack"
+        android:layout_toEndOf="@+id/imageBack"
+        android:src="@drawable/button_right"
+        android:scaleType="fitXY"
+        android:layout_alignParentBottom="true" />
+
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:id="@+id/imageBack"
+        android:layout_alignTop="@+id/imageLeft"
+        android:src="@drawable/button_down"
+        android:scaleType="fitXY"
+        android:layout_alignParentBottom="true"
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@+id/imageLeft" />
+
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:id="@+id/imageForward"
+        android:src="@drawable/button_up"
+        android:scaleType="fitXY"
+        android:layout_above="@+id/imageBack"
+        android:layout_alignLeft="@+id/imageBack"
+        android:layout_marginBottom="10dp" />
+
+    <ImageView
+        android:layout_width="270dp"
+        android:layout_height="250dp"
+        android:id="@+id/imageSpeed"
+        android:src="@drawable/speed0"
+        android:scaleType="fitXY"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentLeft="true" />
+
+    <ImageView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:id="@+id/animView"
+            android:layout_centerInParent="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignWithParentIfMissing="false"
+            android:layout_marginRight="150dp"
+            android:scaleType="fitXY" />
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:id="@+id/ceneterLayout"
+            android:layout_toLeftOf="@+id/animView"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@+id/imageSpeed">
+
+            <ImageView
+                android:layout_width="320dp"
+                android:layout_height="160dp"
+                android:id="@+id/imageCamera"
+                android:longClickable="true"
+                android:scaleType="fitCenter"
+                android:visibility="visible"
+                android:src="@drawable/nocapture"
+                android:layout_alignWithParentIfMissing="false"
+                android:layout_alignParentTop="true"
+                android:layout_toRightOf="@+id/imageRight"
+                android:layout_toEndOf="@+id/imageRight"
+                android:layout_gravity="center_horizontal|top" />
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:weightSum="1"
+                android:gravity="center|center_horizontal"
+                android:layout_gravity="center_horizontal">
+
+                <ToggleButton
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:text="New ToggleButton"
+                    android:id="@+id/autoSwitch"
+                    android:textOff="WŁĄCZ TRYB AUTO"
+                    android:textOn="WYŁĄCZ TRYB AUTO"
+                    android:layout_gravity="left" />
+
+                <ToggleButton
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:text="LED"
+                    android:id="@+id/ledSwitch"
+                    android:textOff="WŁĄCZ LED"
+                    android:textOn="WYŁĄCZ LED"
+                    android:layout_weight="0.34" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center|center_horizontal"
+                android:weightSum="1"
+                android:layout_gravity="center_horizontal">
+
+                <Button
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:text="STEROWANIE SG90"
+                    android:id="@+id/driverBtn"
+                    android:gravity="center|center_vertical"
+                    android:background="#77cadb" />
+
+                <ToggleButton
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:text="Kamera"
+                    android:id="@+id/cameraSwitch"
+                    android:textOff="WŁĄCZ KAMERĘ"
+                    android:textOn="WYŁĄCZ KAMERĘ"
+                    android:layout_weight="0.18" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    <ImageView
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:id="@+id/imageConnect"
+            android:src="@drawable/start"
+            android:layout_centerHorizontal="true"
+            android:scaleType="fitCenter"
+            android:layout_alignParentBottom="true" />
+
+    <RadioGroup
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:id="@+id/radioGroup"
+        android:layout_alignParentRight="true"
+            android:layout_marginRight="15dp">
+
+            <RadioButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="BIEG 5"
+                android:id="@+id/speed5"
+                android:layout_alignTop="@+id/imageRight"
+                android:layout_centerHorizontal="true"
+                android:checked="false"
+                android:textSize="14dp" />
+
+            <RadioButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="BIEG 4"
+                android:id="@+id/speed4"
+                android:textSize="14dp" />
+
+            <RadioButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="BIEG 3"
+                android:id="@+id/speed3"
+                android:textSize="14dp"
+                android:checked="true" />
+
+            <RadioButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="BIEG 2"
+                android:id="@+id/speed2"
+                android:textSize="14dp" />
+
+            <RadioButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="BIEG 1"
+                android:id="@+id/speed1"
+                android:textSize="14dp" />
+
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Medium Text"
+            android:id="@+id/msgView"
+            android:textAlignment="center"
+            android:layout_above="@+id/imageConnect"
+            android:layout_alignEnd="@+id/imageConnect" />
+
+    <ImageView
+            android:layout_width="60dp"
+            android:layout_height="80dp"
+            android:id="@+id/batteryView"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:src="@drawable/battery_full"
+            android:scaleType="fitXY"
+            android:layout_marginRight="20dp"
+            android:layout_marginTop="20dp" />
+
+</RelativeLayout>
+
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
@@ -121,6 +360,15 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="DIAGNOSTYKA"
+            android:id="@+id/diagnosticBtn"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/valueText"
+            android:layout_marginTop="25dp" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="POWRÓT DO STEROWANIA ROBOTEM"
             android:id="@+id/prevButton"
             android:layout_alignParentBottom="true"
@@ -131,244 +379,5 @@
             android:layout_centerHorizontal="true" />
 
     </RelativeLayout>
-
-
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="linix.example.com.robotcontrol.MainActivity"
-    android:background="@drawable/robot_image"
-    android:paddingLeft="10dp"
-    android:paddingBottom="10dp"
-    android:paddingRight="10dp"
-    android:paddingTop="10dp">
-
-
-    <ImageView
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:id="@+id/imageLeft"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:src="@drawable/button_left"
-        android:maxHeight="50dp"
-        android:maxWidth="50dp"
-        android:scaleType="fitXY" />
-
-    <ImageView
-        android:layout_width="80dp"
-        android:layout_height="18000dp"
-        android:id="@+id/imageRight"
-        android:layout_alignTop="@+id/imageBack"
-        android:layout_toRightOf="@+id/imageBack"
-        android:layout_toEndOf="@+id/imageBack"
-        android:src="@drawable/button_right"
-        android:scaleType="fitXY"
-        android:layout_alignParentBottom="true" />
-
-    <ImageView
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:id="@+id/imageBack"
-        android:layout_alignTop="@+id/imageLeft"
-        android:src="@drawable/button_down"
-        android:scaleType="fitXY"
-        android:layout_alignParentBottom="true"
-        android:layout_marginRight="10dp"
-        android:layout_marginLeft="10dp"
-        android:layout_toRightOf="@+id/imageLeft" />
-
-    <ImageView
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:id="@+id/imageForward"
-        android:src="@drawable/button_up"
-        android:scaleType="fitXY"
-        android:layout_above="@+id/imageBack"
-        android:layout_alignLeft="@+id/imageBack"
-        android:layout_marginBottom="10dp" />
-
-    <ImageView
-        android:layout_width="270dp"
-        android:layout_height="250dp"
-        android:id="@+id/imageSpeed"
-        android:src="@drawable/speed0"
-        android:scaleType="fitXY"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentLeft="true" />
-
-    <ImageView
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:id="@+id/animView"
-            android:layout_centerInParent="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignWithParentIfMissing="false"
-            android:layout_marginRight="150dp"
-            android:scaleType="fitXY" />
-
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:id="@+id/ceneterLayout"
-            android:layout_toLeftOf="@+id/animView"
-            android:layout_centerVertical="true"
-            android:layout_toRightOf="@+id/imageSpeed">
-
-            <ImageView
-                android:layout_width="320dp"
-                android:layout_height="160dp"
-                android:id="@+id/imageCamera"
-                android:longClickable="true"
-                android:scaleType="fitCenter"
-                android:visibility="visible"
-                android:src="@drawable/nocapture"
-                android:layout_alignWithParentIfMissing="false"
-                android:layout_alignParentTop="true"
-                android:layout_toRightOf="@+id/imageRight"
-                android:layout_toEndOf="@+id/imageRight"
-                android:layout_gravity="center_horizontal|top" />
-
-            <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:weightSum="1"
-                android:layout_gravity="center_vertical|fill|clip_horizontal|clip_vertical"
-                android:gravity="center_horizontal">
-
-                <ToggleButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="New ToggleButton"
-                    android:id="@+id/autoSwitch"
-                    android:textOff="WŁĄCZ TRYB AUTO"
-                    android:textOn="WYŁĄCZ TRYB AUTO" />
-
-                <ToggleButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="LED"
-                    android:id="@+id/ledSwitch"
-                    android:textOff="WŁĄCZ LED"
-                    android:textOn="WYŁĄCZ LED"
-                    android:layout_gravity="right"
-                    android:layout_weight="0.34" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_horizontal"
-                android:weightSum="1">
-
-                <ToggleButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="New ToggleButton"
-                    android:id="@+id/driverButton"
-                    android:textOff="STEROWANIE SG90"
-                    android:textOn="STEROWANIE MOTOR" />
-
-                <ToggleButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Kamera"
-                    android:id="@+id/cameraSwitch"
-                    android:textOff="WŁĄCZ KAMERĘ"
-                    android:textOn="WYŁĄCZ KAMERĘ"
-                    android:layout_weight="0.18" />
-            </LinearLayout>
-
-        </LinearLayout>
-
-    <ImageView
-            android:layout_width="140dp"
-            android:layout_height="140dp"
-            android:id="@+id/imageConnect"
-            android:src="@drawable/start"
-            android:layout_centerHorizontal="true"
-            android:scaleType="fitCenter"
-            android:layout_alignParentBottom="true" />
-
-    <RadioGroup
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:id="@+id/radioGroup"
-        android:layout_alignParentRight="true"
-            android:layout_marginRight="15dp">
-
-            <RadioButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="BIEG 5"
-                android:id="@+id/speed5"
-                android:layout_alignTop="@+id/imageRight"
-                android:layout_centerHorizontal="true"
-                android:checked="true"
-                android:textSize="14dp" />
-
-            <RadioButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="BIEG 4"
-                android:id="@+id/speed4"
-                android:textSize="14dp" />
-
-            <RadioButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="BIEG 3"
-                android:id="@+id/speed3"
-                android:textSize="14dp" />
-
-            <RadioButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="BIEG 2"
-                android:id="@+id/speed2"
-                android:textSize="14dp" />
-
-            <RadioButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="BIEG 1"
-                android:id="@+id/speed1"
-                android:textSize="14dp" />
-
-        </RadioGroup>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Medium Text"
-            android:id="@+id/msgView"
-            android:textAlignment="center"
-            android:layout_above="@+id/imageConnect"
-            android:layout_alignEnd="@+id/imageConnect" />
-
-    <ImageView
-            android:layout_width="60dp"
-            android:layout_height="80dp"
-            android:id="@+id/batteryView"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true"
-            android:src="@drawable/battery_full"
-            android:scaleType="fitXY"
-            android:layout_marginRight="20dp"
-            android:layout_marginTop="20dp" />
-
-</RelativeLayout>
-
-
 
 </ViewSwitcher>
