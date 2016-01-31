@@ -18,6 +18,7 @@ const byte Motor_IN4  = 8;  //Pin sterujący prawym silnikiem
 
 const byte SG90_Pin   = 9;  //Pin sterujący servo mechanizmem SG90
 
+
 const byte echo_Pin   = 12; //Pin sterującym czujnikiem odległości SR-04
 const byte trig_Pin   = 13; //Pin sterującym czujnikiem odległości SR-04
 
@@ -109,11 +110,11 @@ const byte PARAM_BATTERY_HALF= 2;
 const byte PARAM_BATTERY_FULL= 3;
 
 /*Wartości  PWM dla silników*/
-const byte MOTOR_SPEED1      = 50;
-const byte MOTOR_SPEED2      = 100;
+const byte MOTOR_SPEED1      = 100;
+const byte MOTOR_SPEED2      = 125;
 const byte MOTOR_SPEED3      = 150;
 const byte MOTOR_SPEED4      = 200;
-const byte MOTOR_SPEED5      = 255;
+const byte MOTOR_SPEED5      = 250;
 
 
 /* ------------- D E K L A R A C J A  F U N K C J I------------------------------------------------------ */
@@ -136,7 +137,7 @@ void get_battery_life();
 void led_set(byte param);
 
 /* FUNKCJA CZYTAJĄCA DYSTANS HC-SR04 WARTOŚĆ 0-255 CM GDZIE 255 BARDZO DALEKO */
-int distance_read();
+long distance_read();
 
 /* PRZETWARZANIE KOMEND ODEBRANYCH */
 void bluetooth_parse_command(byte cmd, byte param);
@@ -155,7 +156,7 @@ void robot_stop_low_battery(); //Wylaczenie wszystkich ukladow wl w celu uszczed
 /* ------------- Z M I E N N E  G L O B A L N E --------------------------------------------------------- */
 
 
-const int interval_time = 250;
+const int interval_time = 50;
 const int interval_time_battery = 15000;
 
 /* Zmiene globaln */
@@ -211,8 +212,23 @@ void setup() {
 
   pinMode(LED_Pin, OUTPUT);
   digitalWrite(LED_Pin, LOW);
+
+  /* Procedura diagnostyczna informująca operatora 
+   *że urządzenie jest sprawne i gotowe do działania
+   *
+   *poruszamy czujnik z oczami kąt 180 - 0 - 90
+   */
+   SG90_set(180);
+   delay(500);
+   SG90_set(0);
+   delay(500);
+   SG90_set(90);
 }
 
+
+/* Gdy operator połączy się z urządzeniem
+ *  zaświecamy LED na czas 1 sekundy
+ */
 
 /* ------------- L O O P--------------------------------------------------------------------------------- */
 
@@ -527,9 +543,12 @@ void bluetooth_parse_command(byte cmd, byte param)
             
               if (param == PARAM_CODE) 
               {
+                  led_set(PARAM_ON);
                   TX[1] = motor_get_speed();
                   Connected = true;
                   bluetooth_responde(TX, 2);
+                  delay(1000);
+                  led_set(PARAM_OFF);
               }
               break;
 
@@ -539,6 +558,9 @@ void bluetooth_parse_command(byte cmd, byte param)
               else
                 if (param == PARAM_TEST && AutoRobot == false)
                   robot_test();
+
+              TX[1] = PARAM_TEST;
+              bluetooth_responde(TX, 2);                  
               break;
               
          case CMD_SET_MOTOR:
@@ -620,8 +642,8 @@ void bluetooth_parse_command(byte cmd, byte param)
 
            case CMD_GET_EYES:
               int dis = distance_read();
-              if (dis > 255)
-                TX[1] = 255;
+              if (dis > 250)
+                TX[1] = 251;
               else
                if (dis < 1)
                   TX[1] = 0;
@@ -636,7 +658,7 @@ void bluetooth_parse_command(byte cmd, byte param)
 
 void SG90_set(byte param)
 {
-    if ((param > 0) && (param < 181))
+    if ((param >= 0) && (param <= 180))
     {
         SG90.write(param);
         delay(50);
@@ -650,7 +672,7 @@ void get_battery_life()
       BatteryLife = PARAM_BATTERY_FULL;
     else
     {
-        float BatVolt = sensorV * (13.6 / 1023.0);
+        float BatVolt = (sensorV * (13.6 / 1023.0))+0.3;
         if (BatVolt >= 12.5) 
           BatteryLife = PARAM_BATTERY_FULL;
         else
@@ -665,7 +687,7 @@ void get_battery_life()
 }
 
 
-int  distance_read()
+long  distance_read()
 {
   long time_t, distance_t;
   digitalWrite(trig_Pin, LOW);
@@ -707,6 +729,8 @@ void robot_start()
    if (MotorState != PARAM_STOP)
        motor_control_from_robot(PARAM_STOP);
 
+   if (motor_get_speed() != PARAM_SPEED3)
+      motor_set_speed(PARAM_SPEED3); 
    
    if (digitalRead(SG90_Pin) != 90)
       SG90_set(90); 
@@ -714,7 +738,7 @@ void robot_start()
     prevTime = millis();
 
    //Sprawdzam dysense do przeszkody, który jest największy
-   int left_dis, right_dis, top_dis; 
+   long left_dis, right_dis, top_dis; 
    SG90_set(180);
    left_dis = distance_read();
    SG90_set(1);
@@ -771,12 +795,12 @@ void robot_control()
     }
     
     //Sprawdzam  czy jest przeszkoda 30 cm od pojazdu wartość 255 - więcej niż 2 metry
-    int top_dis = distance_read();
+    long top_dis = distance_read();
     
     if (top_dis < 30)
     {
         
-        int left_dis, right_dis;
+        long left_dis, right_dis;
         
         //Jest przeszkoda zatrzymuje pojazd
         if (MotorState != PARAM_STOP)
@@ -831,20 +855,16 @@ void robot_test()
     byte i;
     motor_control(PARAM_STOP);
 
-    for (i=0; i < 3; i++)
-    {
-      led_set(PARAM_ON);
-      delay(1000);
-      led_set(PARAM_OFF);
-      delay(1000);
-    }
-
+    led_set(PARAM_ON);
+    delay(500);
+    led_set(PARAM_OFF);
+ 
     SG90_set(1);
-    delay(1000);
+    delay(500);
     SG90_set(180);
-    delay(1000);
+    delay(500);
     SG90_set(90);
-    delay(1000);
+    delay(500);
 }
 
 void robot_stop_low_battery()

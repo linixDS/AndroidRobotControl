@@ -7,8 +7,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
 import android.graphics.drawable.AnimationDrawable;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -78,7 +80,10 @@ public class MainActivity extends AppCompatActivity {
 
     BluetoothClient BTClient;
     RobotControl    robot;
+    IPCamera cam;
+
     ProgressDialog connectionDialog;
+    DownloadImageTask task1 = null;
     WifiManager wm;
     CountDownTimer timer;
 
@@ -142,6 +147,16 @@ public class MainActivity extends AppCompatActivity {
 
                 case Constants.MESSAGE_TOAST:
                     Toast.makeText(getApplicationContext(), msg.getData().getString(Constants.TOAST), Toast.LENGTH_SHORT).show();
+                    break;
+
+                case IPCameraConsts.MESSAGE_CAMERA_FRAME:
+                    Bitmap bmp = (Bitmap) msg.obj;
+
+                    cameraImg.setImageDrawable(null);
+                    cameraImg.setBackgroundColor(33455);
+                    cameraImg.setImageBitmap(bmp);
+                    cameraImg.setScaleType(ImageView.ScaleType.CENTER);
+                    cameraImg.invalidate();
                     break;
 
             }
@@ -237,20 +252,25 @@ public class MainActivity extends AppCompatActivity {
 
 
         cameraSwitch = (ToggleButton) findViewById(R.id.cameraSwitch);
-        cameraSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        cameraSwitch.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    if (wm.isWifiEnabled()) {
-
-                    } else
-                        cameraSwitch.setChecked(false);
-                } else {
+            public void onClick(View v) {
+                if (cameraSwitch.isChecked()) {
+                    cameraSwitch.setChecked(false);
                     cameraImg.setImageResource(R.drawable.nocapture);
+                    cam.stopStream();
+                } else {
+                    if (wm.isWifiEnabled()) {
+                        task1 = startTask(cam, false, handler);
+                        cameraSwitch.setChecked(true);
+                        Toast.makeText(getApplicationContext(), "Kamera została uruchomiona !", Toast.LENGTH_SHORT).show();
+                    }
                 }
 
             }
         });
+
+
 
         driverButton = (Button) findViewById(R.id.driverBtn);
         driverButton.setOnClickListener(new View.OnClickListener() {
@@ -374,6 +394,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 robot.setSG90((byte) posBar.getProgress());
+                setSG90Btn.setEnabled(false);
             }
         });
 
@@ -382,6 +403,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 robot.getDistance();
+                getSR04Btn.setEnabled(false);
             }
         });
 
@@ -397,6 +419,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 robot.runDiagnostic();
+                diagBtn.setEnabled(false);
             }
         });
 
@@ -404,6 +427,8 @@ public class MainActivity extends AppCompatActivity {
         //------------------------------------------------------------------------------------------------------------
         setDisconnectComponent();
         loadConfig();
+
+        cam = new IPCamera(addressIP,"","",MainActivity.this);
 
 
         BluetoothAdapter BTAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -458,6 +483,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void onBackgroundClose(){
+        if (task1 != null){
+            task1 = null;
+        }
+    }
 
     private void loadConfig()
     {
@@ -508,6 +538,7 @@ public class MainActivity extends AppCompatActivity {
         setSG90Btn.setEnabled(false);
         driverButton.setEnabled(false);
     }
+
     private void setDisconnectComponent_autoPilot()
     {
         biegi.setEnabled(false);
@@ -522,11 +553,6 @@ public class MainActivity extends AppCompatActivity {
         leftImg.setEnabled(false);
         rightImg.setEnabled(false);
 
-        autoSwitch.setChecked(false);
-        autoSwitch.setEnabled(false);
-
-        cameraSwitch.setChecked(false);
-        cameraSwitch.setEnabled(false);
 
         speedImg.setImageResource(R.drawable.speed0);
         connectImg.setImageResource(R.drawable.start);
@@ -556,8 +582,6 @@ public class MainActivity extends AppCompatActivity {
         autoSwitch.setEnabled(true);
         ledSwitch.setEnabled(true);
 
-        cameraSwitch.setChecked(false);
-        cameraSwitch.setEnabled(true);
 
         speedImg.setImageResource(R.drawable.speed0);
         connectImg.setImageResource(R.drawable.stop);
@@ -592,7 +616,10 @@ public class MainActivity extends AppCompatActivity {
         ledSwitch.setChecked(false);
 
         cameraSwitch.setChecked(false);
-        cameraSwitch.setEnabled(true);
+        if (addressIP.length() > 5)
+            cameraSwitch.setEnabled(true);
+        else
+            cameraSwitch.setEnabled(false);
 
         speedImg.setImageResource(R.drawable.speed0);
         connectImg.setImageResource(R.drawable.stop);
@@ -630,6 +657,9 @@ public class MainActivity extends AppCompatActivity {
                 animBattery.setRepeatCount(Animation.INFINITE);
                 animBattery.setRepeatMode(Animation.REVERSE);
                 batteryImg.startAnimation(animBattery);
+
+                if (autoSwitch.isChecked())
+                    autoSwitch.setChecked(false);
 
                 Toast.makeText(getApplicationContext(), "Niski poziom baterii", Toast.LENGTH_LONG).show();
                 break;
@@ -772,21 +802,53 @@ public class MainActivity extends AppCompatActivity {
 
             case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_CTRL:
                 if (param == RobotProtocolConsts.PARAM_TEST)
-                    Toast.makeText(getApplicationContext(), "Uruchomiono diagnostykę układu", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Uruchomiono diagnostykę układu", Toast.LENGTH_SHORT).show();
+                diagBtn.setEnabled(true);
                 break;
 
             case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_SET_EYES:
-                Toast.makeText(getApplicationContext(), String.format("Ustanowiono nową pozycję dla SG90 - kąt: %d",param+180), Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), String.format("Ustanowiono nową pozycję dla SG90 - kąt: %d",param+180), Toast.LENGTH_SHORT).show();
+                setSG90Btn.setEnabled(true);
                 break;
 
             case RobotProtocolConsts.CMD_RESPONDE + RobotProtocolConsts.CMD_GET_EYES:
-                if (param == 255)
+                if (param == 251)
                     distanceText.setText("> 250 cm");
                 else
                     distanceText.setText(String.format("%d cm",param));
-                Toast.makeText(getApplicationContext(), "Odebrano dane z czujnika odległości", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "Odebrano dane z czujnika odległości", Toast.LENGTH_SHORT).show();
+                getSR04Btn.setEnabled(true);
                 break;
 
         }
     }
+
+
+    private DownloadImageTask startTask(IPCamera cam, boolean useParallelExecution, Handler h) {
+        DownloadImageTask task = new DownloadImageTask(cam);
+        if (useParallelExecution) {
+            task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        } else {
+            task.execute(h);
+        }
+        return task;
+    }
+
+    private class DownloadImageTask extends AsyncTask<Handler, Void, Void> {
+        IPCamera cam;
+        DownloadImageTask(IPCamera cam){
+            this.cam = cam;
+        }
+
+
+
+        protected Void doInBackground(Handler... h) {
+            Log.e("THREAD"," Background");
+            cam.startStream(h[0]);
+            cam.getFrame();
+            onBackgroundClose();
+            return null;
+        }
+    }
+
 }

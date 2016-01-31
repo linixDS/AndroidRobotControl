@@ -1,5 +1,7 @@
 package linix.example.com.robotcontrol;
 
+
+
 interface RobotProtocolConsts{
     public static final byte CMD_RESPONDE = 100;
 
